@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Import User Access{% endblock %}
+{% block page_heading %}Import User Access{% endblock %}
+{% block page_subtitle %}Bulk-create user accounts and access assignments from an Excel template.{% endblock %}
+{% block page_actions %}
+<a class="btn btn-light-primary" href="{{ template_url }}"><i class="bi bi-download me-2"></i>Download Template</a>
+<a class="btn btn-light-secondary" href="{{ cancel_url }}">Back To Users</a>
+{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-xl-7">
+    <div class="card surface-card">
+      <div class="card-header"><h4 class="card-title mb-0">Upload Workbook</h4></div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+          {{ form.hidden_tag() }}
+          <div class="col-12">
+            {{ form.workbook.label(class="form-label") }}
+            {{ form.workbook(class="form-control") }}
+            {% for error in form.workbook.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="col-12">
+            {{ form.submit(class="btn btn-primary") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-5">
+    <div class="card surface-card h-100 import-guide-card">
+      <div class="card-header"><h4 class="card-title mb-0">Template Guide</h4></div>
+      <div class="card-body">
+        <p class="text-muted">Use the Excel template to import many user accounts at once.</p>
+        <div class="enterprise-feature-group enterprise-feature-group-compact">
+          <ul>
+            <li>Required columns: `username`, `email`, `role_name`, `temporary_password`.</li>
+            <li>`employee_code` is optional if you want an unlinked user.</li>
+            <li>`menu_template_name` can apply a saved access template automatically.</li>
+            <li>Use exact role names from HRIS.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if result %}
+<div class="card surface-card mt-4">
+  <div class="card-header"><h4 class="card-title mb-0">Import Result</h4></div>
+  <div class="card-body">
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <div class="surface-card p-3">
+          <span class="text-muted d-block small">Created</span>
+          <strong class="fs-4">{{ result.created }}</strong>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="surface-card p-3">
+          <span class="text-muted d-block small">Issues</span>
+          <strong class="fs-4">{{ result.errors|length }}</strong>
+        </div>
+      </div>
+    </div>
+    {% if result.errors %}
+    <div class="table-responsive access-scroll-table">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr><th>Issues</th></tr>
+        </thead>
+        <tbody>
+          {% for error in result.errors %}
+          <tr><td>{{ error }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

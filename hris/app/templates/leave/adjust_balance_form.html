@@ -1,0 +1,24 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_title = "Adjust Leave Balance" %}
+{% set page_subtitle_text = "Add or reduce leave credits manually for a specific employee." %}
+{% set cancel_url = url_for('leave.index') %}
+{% set modal_intro = "Apply a signed leave adjustment without recreating the whole balance record." %}
+{% block modal_body %}
+<div class="form-section">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="row">
+      <div class="col-md-6">{{ render_field(form.employee_id) }}</div>
+      <div class="col-md-6">{{ render_field(form.leave_type_id) }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-4">{{ render_field(form.year) }}</div>
+      <div class="col-md-4">{{ render_field(form.adjustment_credits) }}</div>
+      <div class="col-md-4">{{ render_field(form.reason) }}</div>
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

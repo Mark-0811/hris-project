@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Punch Kiosk | HRIS</title>
+    <link rel="stylesheet" crossorigin href="https://zuramai.github.io/mazer/demo/assets/compiled/css/app.css">
+    <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mazer-overrides.css') }}">
+  </head>
+  <body class="kiosk-body">
+    <div class="kiosk-layout">
+      <section class="kiosk-stage">
+        <div class="kiosk-panel kiosk-panel-form kiosk-panel-form-centered">
+          <div class="kiosk-panel-tools">
+            <button
+              class="btn btn-light-primary kiosk-help-btn"
+              type="button"
+              data-bs-toggle="modal"
+              data-bs-target="#kioskHelpModal"
+            >
+              <i class="bi bi-question-circle me-2"></i>Help
+            </button>
+            <div class="kiosk-clock" id="kioskClock"></div>
+          </div>
+
+          <div class="kiosk-status-banner kiosk-status-banner-soft" id="kioskStatusBanner">
+            <div class="kiosk-status-dot"></div>
+            <div>
+              <strong>Ready for next punch</strong>
+              <div class="text-muted small">Scanner and keyboard entry supported.</div>
+            </div>
+          </div>
+
+          <div class="kiosk-header kiosk-header-centered">
+            <div>
+              <h2 class="mb-2">Time In / Time Out</h2>
+              <p class="text-muted mb-0">Fast attendance punch.</p>
+            </div>
+          </div>
+
+          <div class="kiosk-main-grid mt-4">
+            <div class="kiosk-input-card">
+              <form id="kioskPunchForm" class="kiosk-form-centered">
+                {{ form.hidden_tag() }}
+                <div class="kiosk-form-status">
+                  <span class="kiosk-helper-label">Terminal State</span>
+                  <strong id="kioskTerminalState">Idle</strong>
+                  <small id="kioskTerminalHint">Waiting for employee identifier.</small>
+                </div>
+                <div class="mb-4 kiosk-input-group">
+                  <label class="form-label fw-semibold text-center d-block">{{ form.identifier.label.text }}</label>
+                  <div class="kiosk-identifier-shell kiosk-identifier-shell-centered">
+                    <span class="kiosk-identifier-addon">
+                      <i class="bi bi-upc-scan kiosk-identifier-icon"></i>
+                    </span>
+                    {{ form.identifier(class="form-control form-control-lg kiosk-identifier-input kiosk-identifier-input-centered", placeholder="Enter employee code", autocomplete="off") }}
+                  </div>
+                </div>
+                <div class="mb-4">
+                  {{ form.action.label(class="form-label fw-semibold text-center d-block") }}
+                  <div class="kiosk-action-grid kiosk-action-grid-compact">
+                    {% for value, label in form.action.choices %}
+                    <label class="kiosk-action-option">
+                      <input
+                        class="form-check-input"
+                        type="radio"
+                        name="{{ form.action.name }}"
+                        value="{{ value }}"
+                        {% if form.action.data == value or (not form.action.data and loop.first) %}checked{% endif %}
+                      >
+                      <i class="bi {% if value == 'time_in' %}bi-box-arrow-in-right{% elif value == 'time_out' %}bi-box-arrow-right{% else %}bi-magic{% endif %} kiosk-action-symbol"></i>
+                      <span class="kiosk-action-copy">
+                        <strong>{{ label }}</strong>
+                        <small>
+                          {% if value == 'time_in' %}
+                          Start record
+                          {% elif value == 'time_out' %}
+                          Close record
+                          {% else %}
+                          Let HRIS decide
+                          {% endif %}
+                        </small>
+                      </span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="mb-4">
+                  {{ form.source.label(class="form-label fw-semibold text-center d-block") }}
+                  {{ form.source(class="form-select form-select-lg kiosk-source-select") }}
+                </div>
+                <div class="d-grid gap-3">
+                  <button class="btn btn-primary btn-lg kiosk-submit-btn" type="submit" id="kioskSubmitBtn">
+                    <i class="bi bi-send-check me-2"></i>Submit Punch
+                  </button>
+                  <button class="btn btn-light-secondary btn-lg" type="button" id="clearPunchForm">Clear</button>
+                </div>
+              </form>
+            </div>
+
+            <aside class="kiosk-profile-card">
+              <div class="kiosk-profile-photo-shell">
+                <img
+                  src="{{ url_for('static', filename='images/default-avatar.svg') }}"
+                  alt="Employee"
+                  class="kiosk-profile-photo"
+                  id="kioskProfilePhoto"
+                >
+              </div>
+              <div class="kiosk-profile-copy">
+                <h4 id="kioskProfileName">Waiting for employee</h4>
+                <p id="kioskProfileRole">Employee details will appear here.</p>
+              </div>
+              <div class="kiosk-profile-metrics">
+                <div class="kiosk-profile-metric">
+                  <span>Employee Code</span>
+                  <strong id="kioskProfileCode">-</strong>
+                </div>
+                <div class="kiosk-profile-metric">
+                  <span>Department</span>
+                  <strong id="kioskProfileDepartment">-</strong>
+                </div>
+                <div class="kiosk-profile-metric">
+                  <span>Position</span>
+                  <strong id="kioskProfilePosition">-</strong>
+                </div>
+                <div class="kiosk-profile-metric">
+                  <span>Status</span>
+                  <strong id="kioskProfileEmployment">-</strong>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="kiosk-result-card mt-4" id="kioskResultCard">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+              <div>
+                <h5 class="mb-1">Last Punch Result</h5>
+              </div>
+              <span class="status-chip status-chip-info" id="kioskResultState">Waiting</span>
+            </div>
+            <div class="row g-3 kiosk-result-grid">
+              <div class="col-md-6">
+                <div class="kiosk-result-metric">
+                  <span>Employee</span>
+                  <strong id="kioskResultEmployee">No punch yet</strong>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="kiosk-result-metric">
+                  <span>Status</span>
+                  <strong id="kioskResultStatus">-</strong>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="kiosk-result-metric">
+                  <span>Time In</span>
+                  <strong id="kioskResultTimeIn">-</strong>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="kiosk-result-metric">
+                  <span>Time Out</span>
+                  <strong id="kioskResultTimeOut">-</strong>
+                </div>
+              </div>
+            </div>
+            <div class="kiosk-result-message" id="kioskResultMessage">Waiting for the first punch.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal fade" id="kioskHelpModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">How to use kiosk</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="kiosk-help-steps">
+              <div class="kiosk-help-step">
+                <span>1</span>
+                <div>Scan your badge or enter your employee code.</div>
+              </div>
+              <div class="kiosk-help-step">
+                <span>2</span>
+                <div>Leave the mode on <strong>Auto</strong> unless HR tells you to change it.</div>
+              </div>
+              <div class="kiosk-help-step">
+                <span>3</span>
+                <div>Click <strong>Submit Punch</strong> or press <strong>Enter</strong>.</div>
+              </div>
+              <div class="kiosk-help-step">
+                <span>4</span>
+                <div>Wait for the success message before the next employee uses the kiosk.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="punchResultModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Punch Result</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <dl class="row info-pair mb-0">
+              <dt class="col-sm-4">Employee</dt><dd class="col-sm-8" id="modalEmployee">-</dd>
+              <dt class="col-sm-4">Date</dt><dd class="col-sm-8" id="modalDate">-</dd>
+              <dt class="col-sm-4">Time In</dt><dd class="col-sm-8" id="modalTimeIn">-</dd>
+              <dt class="col-sm-4">Time Out</dt><dd class="col-sm-8" id="modalTimeOut">-</dd>
+              <dt class="col-sm-4">Status</dt><dd class="col-sm-8" id="modalStatus">-</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      const clockEl = document.getElementById("kioskClock");
+      const formEl = document.getElementById("kioskPunchForm");
+      const identifierEl = document.getElementById("identifier");
+      const actionEls = Array.from(document.querySelectorAll('input[name="action"]'));
+      const sourceEl = document.getElementById("source");
+      const clearBtn = document.getElementById("clearPunchForm");
+      const submitBtn = document.getElementById("kioskSubmitBtn");
+      const statusBanner = document.getElementById("kioskStatusBanner");
+      const terminalStateEl = document.getElementById("kioskTerminalState");
+      const terminalHintEl = document.getElementById("kioskTerminalHint");
+      const resultStateEl = document.getElementById("kioskResultState");
+      const resultEmployeeEl = document.getElementById("kioskResultEmployee");
+      const resultStatusEl = document.getElementById("kioskResultStatus");
+      const resultTimeInEl = document.getElementById("kioskResultTimeIn");
+      const resultTimeOutEl = document.getElementById("kioskResultTimeOut");
+      const resultMessageEl = document.getElementById("kioskResultMessage");
+      const profilePhotoEl = document.getElementById("kioskProfilePhoto");
+      const profileNameEl = document.getElementById("kioskProfileName");
+      const profileRoleEl = document.getElementById("kioskProfileRole");
+      const profileCodeEl = document.getElementById("kioskProfileCode");
+      const profileDepartmentEl = document.getElementById("kioskProfileDepartment");
+      const profilePositionEl = document.getElementById("kioskProfilePosition");
+      const profileEmploymentEl = document.getElementById("kioskProfileEmployment");
+      const modal = new bootstrap.Modal(document.getElementById("punchResultModal"));
+      const socket = io("/kiosk");
+      const defaultPhotoUrl = "{{ url_for('static', filename='images/default-avatar.svg') }}";
+      let lookupRequestToken = 0;
+      let lookupTimer = null;
+
+      function tickClock() {
+        const now = new Date();
+        clockEl.textContent = now.toLocaleString();
+      }
+
+      function formatDateTime(value) {
+        if (!value) return "-";
+        return new Date(value).toLocaleString();
+      }
+
+      function updateProfileCard(record) {
+        profilePhotoEl.src = record.employee_photo_url || defaultPhotoUrl;
+        profileNameEl.textContent = record.employee_name || "Employee";
+        profileRoleEl.textContent = [record.employee_position, record.employee_department].filter(Boolean).join(" - ") || "Employee details ready";
+        profileCodeEl.textContent = record.employee_code || "-";
+        profileDepartmentEl.textContent = record.employee_department || "-";
+        profilePositionEl.textContent = record.employee_position || "-";
+        profileEmploymentEl.textContent = record.employee_status_label || "-";
+      }
+
+      function resetProfileCard() {
+        profilePhotoEl.src = defaultPhotoUrl;
+        profileNameEl.textContent = "Waiting for employee";
+        profileRoleEl.textContent = "Employee details will appear here.";
+        profileCodeEl.textContent = "-";
+        profileDepartmentEl.textContent = "-";
+        profilePositionEl.textContent = "-";
+        profileEmploymentEl.textContent = "-";
+      }
+
+      async function previewEmployee(identifier) {
+        const trimmed = identifier.trim();
+        const currentToken = ++lookupRequestToken;
+
+        if (!trimmed) {
+          resetProfileCard();
+          return;
+        }
+
+        try {
+          const response = await fetch(`/attendance/api/employee-lookup?identifier=${encodeURIComponent(trimmed)}`);
+          if (!response.ok) {
+            return;
+          }
+          const payload = await response.json();
+          if (currentToken !== lookupRequestToken) {
+            return;
+          }
+          if (payload.employee) {
+            updateProfileCard(payload.employee);
+          } else {
+            resetProfileCard();
+          }
+        } catch (error) {
+          if (currentToken === lookupRequestToken) {
+            resetProfileCard();
+          }
+        }
+      }
+
+      tickClock();
+      setInterval(tickClock, 1000);
+
+      function setTerminalState(state, hint, tone = "info") {
+        terminalStateEl.textContent = state;
+        terminalHintEl.textContent = hint;
+        resultStateEl.className = `status-chip ${tone === "success" ? "status-chip" : tone === "error" ? "status-chip-danger" : tone === "warning" ? "status-chip-warning" : "status-chip-info"}`;
+        resultStateEl.textContent = state;
+        statusBanner.classList.toggle("is-busy", tone === "warning");
+        statusBanner.classList.toggle("is-success", tone === "success");
+        statusBanner.classList.toggle("is-error", tone === "error");
+      }
+
+      clearBtn.addEventListener("click", () => {
+        identifierEl.value = "";
+        sourceEl.value = "manual";
+        actionEls.find((input) => input.value === "auto").checked = true;
+        setTerminalState("Idle", "Waiting for employee identifier.", "info");
+        resetProfileCard();
+        identifierEl.focus();
+      });
+
+      formEl.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!identifierEl.value.trim()) {
+          setTerminalState("Missing ID", "Enter or scan an employee identifier before submitting.", "error");
+          Swal.fire({
+            icon: "warning",
+            title: "Employee identifier required",
+            text: "Scan a badge or type an employee code first."
+          });
+          identifierEl.focus();
+          return;
+        }
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing punch';
+        setTerminalState("Processing", "Please wait while HRIS validates the punch.", "warning");
+        const actionEl = actionEls.find((input) => input.checked);
+        socket.emit("attendance_punch", {
+          identifier: identifierEl.value,
+          action: actionEl ? actionEl.value : "auto",
+          source: sourceEl.value
+        });
+      });
+
+      identifierEl.addEventListener("input", () => {
+        window.clearTimeout(lookupTimer);
+        lookupTimer = window.setTimeout(() => previewEmployee(identifierEl.value), 180);
+      });
+
+      socket.on("punch_result", (payload) => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-send-check me-2"></i>Submit Punch';
+        if (!payload.ok) {
+          setTerminalState("Failed", payload.message, "error");
+          resultEmployeeEl.textContent = "No match";
+          resultStatusEl.textContent = "Failed";
+          resultTimeInEl.textContent = "-";
+          resultTimeOutEl.textContent = "-";
+          resultMessageEl.textContent = payload.message;
+          resetProfileCard();
+          Swal.fire({
+            icon: "error",
+            title: "Punch failed",
+            text: payload.message
+          });
+          identifierEl.select();
+          return;
+        }
+
+        document.getElementById("modalEmployee").textContent = payload.record.employee_name || "-";
+        document.getElementById("modalDate").textContent = payload.record.date || "-";
+        document.getElementById("modalTimeIn").textContent = formatDateTime(payload.record.time_in);
+        document.getElementById("modalTimeOut").textContent = formatDateTime(payload.record.time_out);
+        document.getElementById("modalStatus").textContent = payload.record.status || "-";
+        resultEmployeeEl.textContent = payload.record.employee_name || "-";
+        resultStatusEl.textContent = payload.record.status || "-";
+        resultTimeInEl.textContent = formatDateTime(payload.record.time_in);
+        resultTimeOutEl.textContent = formatDateTime(payload.record.time_out);
+        resultMessageEl.textContent = payload.message;
+        updateProfileCard(payload.record);
+        setTerminalState("Accepted", "Punch saved successfully. Ready for the next employee.", "success");
+
+        Swal.fire({
+          icon: "success",
+          title: "Punch accepted",
+          text: payload.message,
+          timer: 1800,
+          showConfirmButton: false
+        }).then(() => modal.show());
+
+        identifierEl.value = "";
+        identifierEl.focus();
+      });
+
+      identifierEl.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          formEl.requestSubmit();
+        }
+      });
+
+      identifierEl.focus();
+      resetProfileCard();
+    </script>
+  </body>
+</html>

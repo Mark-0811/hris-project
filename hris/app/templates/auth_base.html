@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Authentication{% endblock %}</title>
+    <link rel="stylesheet" crossorigin href="https://zuramai.github.io/mazer/demo/assets/compiled/css/app.css">
+    <link rel="stylesheet" crossorigin href="https://zuramai.github.io/mazer/demo/assets/compiled/css/app-dark.css">
+    <link rel="stylesheet" crossorigin href="https://zuramai.github.io/mazer/demo/assets/compiled/css/auth.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mazer-overrides.css') }}">
+  </head>
+  <body>
+    <script src="https://zuramai.github.io/mazer/demo/assets/static/js/initTheme.js"></script>
+    <div id="auth">
+      <div class="row h-100">
+        <div class="col-lg-5 col-12">
+          <div id="auth-left" class="hris-auth-left">
+            <div class="auth-logo">
+              <a href="{{ url_for('auth.login') }}" class="auth-brand">
+                <span class="brand-mark">HR</span>
+                <span>HRIS</span>
+              </a>
+            </div>
+            <h1 class="auth-title">{% block auth_title %}Welcome back{% endblock %}</h1>
+            <p class="auth-subtitle mb-5">{% block auth_subtitle %}Access the HR workspace with your company account.{% endblock %}</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div class="mb-4">
+                  {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+
+            {% block auth_content %}{% endblock %}
+          </div>
+        </div>
+        <div class="col-lg-7 d-none d-lg-block">
+          <div id="auth-right" class="hris-auth-right">
+            <div class="auth-panel-copy">
+              <span class="badge bg-light-primary mb-3">Modern HR Workspace</span>
+              <h2 class="text-white mb-3">A cleaner admin interface for people operations.</h2>
+              <p class="text-white-50 mb-0">Built on the Mazer admin look and tuned for employee records, access management, punch kiosks, and future HR workflows.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

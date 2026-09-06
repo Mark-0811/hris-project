@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Departments{% endblock %}
+{% block page_heading %}Departments{% endblock %}
+{% block page_subtitle %}Manage branches, cost centers, and department ownership in a cleaner organizational view.{% endblock %}
+{% block page_actions %}
+<a class="btn btn-primary" data-modal-link="true" href="{{ url_for('employees.create_department') }}"><i class="bi bi-plus-lg me-2"></i>Add Department</a>
+{% endblock %}
+{% block content %}
+<div class="card surface-card table-shell">
+  <div class="card-header">
+    <h4 class="card-title mb-0">Department Directory</h4>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle datatable">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Branch</th>
+            <th>Cost Center</th>
+            <th>Manager</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for department in departments %}
+          <tr>
+            <td class="fw-semibold">{{ department.code }}</td>
+            <td>{{ department.name }}</td>
+            <td>{{ department.branch or "Not set" }}</td>
+            <td>{{ department.cost_center or "Not set" }}</td>
+            <td>{{ department.manager.full_name if department.manager else "Unassigned" }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-light-secondary" data-modal-link="true" href="{{ url_for('employees.edit_department', department_id=department.id) }}">Edit</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">No departments have been added yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

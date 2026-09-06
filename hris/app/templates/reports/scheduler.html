@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Report Scheduler{% endblock %}
+{% block page_heading %}Report Scheduler{% endblock %}
+{% block page_subtitle %}Save reusable report filters and schedule automatic report delivery.{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h5 class="mb-0">Saved Filter Presets</h5></div>
+      <div class="card-body">
+        <form method="post" class="row g-2 mb-3">
+          <input type="hidden" name="action" value="create_preset">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="col-12">
+            <input type="text" class="form-control" name="preset_name" placeholder="Preset name (e.g., Monthly HR Ops)" required>
+          </div>
+          <div class="col-6">
+            <input type="number" min="1" class="form-control" name="department_id" placeholder="Department ID">
+          </div>
+          <div class="col-6">
+            <input type="text" class="form-control" name="status" placeholder="Employee status">
+          </div>
+          <div class="col-6">
+            <input type="date" class="form-control" name="date_from">
+          </div>
+          <div class="col-6">
+            <input type="date" class="form-control" name="date_to">
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">Save Preset</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>Name</th><th>Type</th><th>Filters</th></tr></thead>
+            <tbody>
+              {% for preset in presets %}
+              {% set f = preset_filters(preset) %}
+              <tr>
+                <td>{{ preset.name }}</td>
+                <td>{{ preset.report_type }}</td>
+                <td class="small text-muted">
+                  Dept: {{ f.get('department_id') or '-' }}, Status: {{ f.get('status') or '-' }},
+                  From: {{ f.get('date_from') or '-' }}, To: {{ f.get('date_to') or '-' }}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="text-center text-muted">No presets yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h5 class="mb-0">Scheduled Deliveries</h5></div>
+      <div class="card-body">
+        <form method="post" class="row g-2 mb-3">
+          <input type="hidden" name="action" value="create_schedule">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="col-12">
+            <input type="text" class="form-control" name="schedule_name" placeholder="Schedule name" required>
+          </div>
+          <div class="col-6">
+            <select class="form-select" name="cadence">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <select class="form-select" name="preset_id">
+              <option value="">No preset</option>
+              {% for preset in presets %}
+              <option value="{{ preset.id }}">{{ preset.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <input type="email" class="form-control" name="delivery_target" placeholder="Delivery email" required>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">Create Schedule</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>Name</th><th>Cadence</th><th>Target</th><th>Next Run</th></tr></thead>
+            <tbody>
+              {% for item in schedules %}
+              <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.cadence|title }}</td>
+                <td>{{ item.delivery_target }}</td>
+                <td>{{ item.next_run_at.strftime('%Y-%m-%d %H:%M') if item.next_run_at else '-' }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-center text-muted">No schedules yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card surface-card">
+  <div class="card-body">
+    <div class="d-flex gap-4 flex-wrap">
+      <div><span class="text-muted">Saved presets:</span> <strong>{{ summary.presets }}</strong></div>
+      <div><span class="text-muted">Active schedules:</span> <strong>{{ summary.schedules }}</strong></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

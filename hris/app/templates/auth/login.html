@@ -1,0 +1,38 @@
+{% extends "auth_base.html" %}
+{% block title %}Sign In{% endblock %}
+{% block auth_title %}Sign in{% endblock %}
+{% block auth_subtitle %}Use your HRIS credentials to access employee records, administration tools, and workflow modules.{% endblock %}
+{% block auth_content %}
+<form method="post">
+  {{ form.hidden_tag() }}
+  <div class="form-group position-relative has-icon-left mb-4">
+    {{ form.username(class="form-control form-control-xl", placeholder="Username") }}
+    <div class="form-control-icon">
+      <i class="bi bi-person"></i>
+    </div>
+    {% for error in form.username.errors %}
+      <div class="text-danger small mt-1">{{ error }}</div>
+    {% endfor %}
+  </div>
+  <div class="form-group position-relative has-icon-left mb-4">
+    {{ form.password(class="form-control form-control-xl", placeholder="Password") }}
+    <div class="form-control-icon">
+      <i class="bi bi-shield-lock"></i>
+    </div>
+    {% for error in form.password.errors %}
+      <div class="text-danger small mt-1">{{ error }}</div>
+    {% endfor %}
+  </div>
+  <div class="form-check form-check-lg d-flex align-items-end mb-4">
+    {{ form.remember_me(class="form-check-input me-2") }}
+    {{ form.remember_me.label(class="form-check-label text-gray-600") }}
+  </div>
+  <div class="text-end mb-3">
+    <a class="font-bold" href="{{ url_for('auth.forgot_password') }}">Forgot password?</a>
+  </div>
+  {{ form.submit(class="btn btn-primary btn-block btn-lg shadow-lg mt-4") }}
+</form>
+<div class="text-center mt-4">
+  <a class="font-bold" href="{{ url_for('attendance.kiosk') }}">Open punch kiosk</a>
+</div>
+{% endblock %}

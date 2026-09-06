@@ -1,0 +1,35 @@
+services:
+  web:
+    image: hris-web:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hris-web
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    volumes:
+      - ./hris/static/uploads:/app/hris/static/uploads
+
+  db:
+    image: hris-postgres:16
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    container_name: hris-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hris_postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

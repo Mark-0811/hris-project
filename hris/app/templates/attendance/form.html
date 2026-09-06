@@ -1,0 +1,33 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_subtitle_text = "Capture attendance times, status, and exception minutes in the Mazer workspace." %}
+{% set cancel_url = url_for('attendance.index') %}
+{% set modal_intro = "Attendance entry now opens in a centered modal flow." %}
+{% block modal_body %}
+<div class="form-section">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="row">
+      <div class="col-md-6">{{ render_field(form.employee_id) }}</div>
+      <div class="col-md-6">{{ render_field(form.date) }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">{{ render_field(form.time_in) }}</div>
+      <div class="col-md-6">{{ render_field(form.time_out) }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">{{ render_field(form.break_in) }}</div>
+      <div class="col-md-6">{{ render_field(form.break_out) }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-3">{{ render_field(form.late_minutes) }}</div>
+      <div class="col-md-3">{{ render_field(form.undertime_minutes) }}</div>
+      <div class="col-md-3">{{ render_field(form.overtime_minutes) }}</div>
+      <div class="col-md-3">{{ render_field(form.status) }}</div>
+    </div>
+    {{ render_field(form.remarks, rows=3) }}
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

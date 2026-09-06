@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_heading %}Reports{% endblock %}
+{% block page_subtitle %}{{ "Review your personal attendance, leave, and payroll reports." if payload.employee_scope else "Review live HR snapshots across employee data, attendance, leave, and payroll." }}{% endblock %}
+{% block content %}
+<div class="card surface-card mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <h5 class="mb-0">Saved Filters and Scheduler</h5>
+      <a href="{{ url_for('reports.scheduler') }}" class="btn btn-outline-primary"><i class="bi bi-calendar2-week me-2"></i>Open Scheduler</a>
+    </div>
+    <form method="get" class="row g-2">
+      <div class="col-12 col-md-3">
+        <input type="number" min="1" class="form-control" name="department_id" placeholder="Department ID" value="{{ request.args.get('department_id', '') }}">
+      </div>
+      <div class="col-12 col-md-2">
+        <input type="text" class="form-control" name="status" placeholder="Status" value="{{ request.args.get('status', '') }}">
+      </div>
+      <div class="col-12 col-md-2">
+        <input type="date" class="form-control" name="date_from" value="{{ request.args.get('date_from', '') }}">
+      </div>
+      <div class="col-12 col-md-2">
+        <input type="date" class="form-control" name="date_to" value="{{ request.args.get('date_to', '') }}">
+      </div>
+      <div class="col-12 col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-grow-1">Apply Filters</button>
+        <a href="{{ url_for('reports.index') }}" class="btn btn-light-primary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-3"><div class="card metric-card metric-card-primary"><div class="card-body"><p class="text-white-50">Employees</p><h2 class="text-white">{{ payload.summary.employees }}</h2></div></div></div>
+  <div class="col-md-3"><div class="card metric-card metric-card-info"><div class="card-body"><p class="text-white-50">Departments</p><h2 class="text-white">{{ payload.summary.departments }}</h2></div></div></div>
+  <div class="col-md-3"><div class="card metric-card metric-card-warning"><div class="card-body"><p class="text-white-50">Pending Leave</p><h2 class="text-white">{{ payload.summary.pending_leave_requests }}</h2></div></div></div>
+  <div class="col-md-3"><div class="card metric-card metric-card-success"><div class="card-body"><p class="text-white-50">Payroll Entries</p><h2 class="text-white">{{ payload.summary.payroll_entries }}</h2></div></div></div>
+</div>
+<div class="row g-4">
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card table-shell">
+      <div class="card-header"><h4 class="card-title mb-0">Employee Master List</h4></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>Code</th><th>Name</th><th>Department</th><th>Status</th></tr></thead>
+            <tbody>{% for item in payload.employees[:12] %}<tr><td>{{ item.employee_code }}</td><td>{{ item.full_name }}</td><td>{{ item.department.name if item.department else "Unassigned" }}</td><td>{{ item.employment_status|title }}</td></tr>{% endfor %}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card table-shell">
+      <div class="card-header"><h4 class="card-title mb-0">Attendance Snapshot</h4></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>Employee</th><th>Date</th><th>Status</th><th>Late</th></tr></thead>
+            <tbody>{% for item in payload.attendance %}<tr><td>{{ item.employee.full_name if item.employee else "Unknown" }}</td><td>{{ item.date }}</td><td>{{ item.status|title }}</td><td>{{ item.late_minutes }}</td></tr>{% else %}<tr><td colspan="4" class="text-center py-5 text-muted">No attendance data yet.</td></tr>{% endfor %}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card table-shell">
+      <div class="card-header"><h4 class="card-title mb-0">Leave Snapshot</h4></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>Employee</th><th>Type</th><th>Status</th><th>Days</th></tr></thead>
+            <tbody>{% for item in payload.leave %}<tr><td>{{ item.employee.full_name if item.employee else "Unknown" }}</td><td>{{ item.leave_type.name if item.leave_type else "Unknown" }}</td><td>{{ item.status|title }}</td><td>{{ item.days }}</td></tr>{% else %}<tr><td colspan="4" class="text-center py-5 text-muted">No leave data yet.</td></tr>{% endfor %}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card table-shell">
+      <div class="card-header"><h4 class="card-title mb-0">Payroll Snapshot</h4></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>Employee</th><th>Cutoff</th><th>Net Pay</th><th>Status</th><th class="text-end">Slip</th></tr></thead>
+            <tbody>{% for item in payload.payroll %}<tr><td>{{ item.employee.full_name if item.employee else "Unknown" }}</td><td>{{ item.cutoff.cutoff_name if item.cutoff else "Unknown" }}</td><td>{{ item.net_pay }}</td><td>{{ item.status|title }}</td><td class="text-end"><a class="btn btn-sm btn-light-primary" href="{{ url_for('payroll.download_entry_pdf', entry_id=item.id) }}">PDF</a></td></tr>{% else %}<tr><td colspan="5" class="text-center py-5 text-muted">No payroll data yet.</td></tr>{% endfor %}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

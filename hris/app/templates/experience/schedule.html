@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}My Schedule{% endblock %}
+{% block page_heading %}My Schedule{% endblock %}
+{% block page_subtitle %}Review your shift, mobile punch details, team leave conflicts, and correction requests.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-xl-5">
+    <div class="card h-100">
+      <div class="card-header">
+        <h4 class="card-title">Mobile Punch</h4>
+      </div>
+      <div class="card-body">
+        <div class="experience-preview-panel mb-4">
+          <div>
+            <h5 class="mb-1">{{ schedule.employee.full_name if schedule.employee else "Employee" }}</h5>
+            <p class="text-muted mb-1">{{ schedule.employee.employee_code if schedule.employee else "" }}</p>
+            <small class="text-muted">{{ schedule.active_shift.shift.shift_name if schedule.active_shift and schedule.active_shift.shift else "No active shift assigned" }}</small>
+          </div>
+          <span class="badge bg-light-primary">{{ schedule.today_record.status.replace('_', ' ')|title if schedule.today_record else "Ready" }}</span>
+        </div>
+        <form method="post" novalidate>
+          {{ punch_form.hidden_tag() }}
+          <div class="mb-3">{{ punch_form.action.label(class="form-label") }}{{ punch_form.action(class="form-select") }}</div>
+          <div class="row g-3">
+            <div class="col-md-6">{{ punch_form.latitude.label(class="form-label") }}{{ punch_form.latitude(class="form-control", placeholder="14.5995") }}</div>
+            <div class="col-md-6">{{ punch_form.longitude.label(class="form-label") }}{{ punch_form.longitude(class="form-control", placeholder="120.9842") }}</div>
+          </div>
+          <div class="mt-3">{{ punch_form.device_name.label(class="form-label") }}{{ punch_form.device_name(class="form-control", placeholder="Employee mobile device") }}</div>
+          <div class="form-check form-switch mt-3">
+            {{ punch_form.anti_spoof_confirmed(class="form-check-input") }}
+            {{ punch_form.anti_spoof_confirmed.label(class="form-check-label") }}
+          </div>
+          <div class="alert alert-light-primary mt-3 mb-0">
+            <strong>Punch preview:</strong> {{ schedule.attendance_explanation }}
+          </div>
+          <div class="mt-3 d-grid">{{ punch_form.submit(class="btn btn-primary") }}</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-7">
+    <div class="card h-100">
+      <div class="card-header">
+        <h4 class="card-title">Shift and Attendance</h4>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="experience-metric-panel">
+              <span class="text-muted d-block">Current shift</span>
+              <strong>{{ schedule.active_shift.shift.shift_name if schedule.active_shift and schedule.active_shift.shift else "No active shift" }}</strong>
+              <div class="text-muted mt-1">
+                {% if schedule.active_shift and schedule.active_shift.shift %}
+                {{ schedule.active_shift.shift.start_time.strftime("%I:%M %p") }} to {{ schedule.active_shift.shift.end_time.strftime("%I:%M %p") }}
+                {% else %}
+                Ask HR to assign a shift.
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="experience-metric-panel">
+              <span class="text-muted d-block">Geo attendance rule</span>
+              <strong>{{ schedule.geo_rule.branch_name if schedule.geo_rule else "No geofence configured" }}</strong>
+              <div class="text-muted mt-1">
+                {% if schedule.geo_rule %}
+                Radius: {{ schedule.geo_rule.radius_meters }} meters
+                {% else %}
+                Mobile punch is currently running without branch geofence.
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <h5>Recent attendance</h5>
+          <div class="table-responsive">
+            <table class="table table-borderless align-middle">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Late</th>
+                  <th>Undertime</th>
+                  <th>Overtime</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in schedule.recent_records %}
+                <tr>
+                  <td>{{ item.date }}</td>
+                  <td>{{ item.status.replace('_', ' ')|title }}</td>
+                  <td>{{ item.late_minutes }}</td>
+                  <td>{{ item.undertime_minutes }}</td>
+                  <td>{{ item.overtime_minutes }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-muted">No attendance history yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h4 class="card-title">Attendance Correction Wizard</h4>
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ correction_form.hidden_tag() }}
+          <div class="mb-3">{{ correction_form.attendance_record_id.label(class="form-label") }}{{ correction_form.attendance_record_id(class="form-select") }}</div>
+          <div class="mb-3">{{ correction_form.reason_template.label(class="form-label") }}{{ correction_form.reason_template(class="form-select") }}</div>
+          <div class="mb-3">{{ correction_form.details.label(class="form-label") }}{{ correction_form.details(class="form-control", rows="4", placeholder="Explain what happened and include any useful proof details.") }}</div>
+          <div class="row g-3">
+            <div class="col-md-6">{{ correction_form.new_time_in.label(class="form-label") }}{{ correction_form.new_time_in(class="form-control", placeholder="2026-04-08T08:31:00") }}</div>
+            <div class="col-md-6">{{ correction_form.new_time_out.label(class="form-label") }}{{ correction_form.new_time_out(class="form-control", placeholder="2026-04-08T17:35:00") }}</div>
+          </div>
+          <div class="mt-3 d-grid">{{ correction_form.submit(class="btn btn-light-primary") }}</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h4 class="card-title">Upcoming holidays and team leave</h4>
+      </div>
+      <div class="card-body">
+        <h6>Holiday calendar</h6>
+        {% for item in schedule.holidays %}
+        <div class="experience-list-row">
+          <div>
+            <strong>{{ item.holiday.holiday_name }}</strong>
+            <div class="text-muted">{{ item.holiday.date }} · {{ item.holiday.holiday_type|title }}</div>
+          </div>
+          <span class="badge {{ 'bg-light-warning' if item.working_day else 'bg-light-success' }}">
+            {{ 'Working day' if item.working_day else 'Holiday' }}
+          </span>
+        </div>
+        {% else %}
+        <p class="text-muted">No holidays are configured yet.</p>
+        {% endfor %}
+
+        <hr>
+
+        <h6>Approved team leave</h6>
+        {% for item in schedule.team_leave_calendar %}
+        <div class="experience-list-row">
+          <div>
+            <strong>{{ item.employee.full_name if item.employee else "Employee" }}</strong>
+            <div class="text-muted">{{ item.start_date }} to {{ item.end_date }}</div>
+          </div>
+          <span class="badge bg-light-secondary">{{ item.leave_type.name if item.leave_type else "Leave" }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No approved team leave conflicts in view.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

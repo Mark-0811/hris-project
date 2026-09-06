@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Enterprise Center{% endblock %}
+{% block page_heading %}Enterprise Center{% endblock %}
+{% block page_subtitle %}Expanded HRIS capabilities for compliance, intelligence, integrations, and scale.{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+  {% for card in cards %}
+  <div class="col-12 col-md-6 col-xl-3">
+    <div class="card surface-card h-100">
+      <div class="card-body">
+        <p class="text-muted mb-2">{{ card.label }}</p>
+        <h3 class="mb-0">{{ card.value }}</h3>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-xl-8">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h5 class="mb-0">Enterprise Expansion Pack</h5></div>
+      <div class="card-body">
+        <div class="row g-3">
+          {% for group in groups %}
+          <div class="col-12 col-lg-4">
+            <div class="enterprise-feature-group">
+              <h6 class="mb-2">{{ group.title }}</h6>
+              <ul class="mb-0">
+                {% for item in group["items"] %}
+                <li>{{ item }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-4">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h5 class="mb-0">Analytics Snapshot</h5></div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Succession candidates</span><strong>{{ analytics.succession_candidates }}</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Active surveys</span><strong>{{ analytics.active_surveys }}</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Training courses</span><strong>{{ analytics.training_courses }}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span class="text-muted">Exit interviews</span><strong>{{ analytics.exit_interviews }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="card surface-card h-100 text-decoration-none" href="{{ url_for('enterprise.tickets') }}">
+      <div class="card-body">
+        <h5>HR Ticketing</h5>
+        <p class="text-muted mb-0">Create, assign, and close support requests.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="card surface-card h-100 text-decoration-none" href="{{ url_for('enterprise.compliance_records') }}">
+      <div class="card-body">
+        <h5>Compliance Records</h5>
+        <p class="text-muted mb-0">Operate consent and privacy request queues.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="card surface-card h-100 text-decoration-none" href="{{ url_for('enterprise.integrations_manage') }}">
+      <div class="card-body">
+        <h5>Integration Ops</h5>
+        <p class="text-muted mb-0">Manage providers and webhook subscriptions.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="card surface-card h-100 text-decoration-none" href="{{ url_for('enterprise.data_health_checks') }}">
+      <div class="card-body">
+        <h5>Check Workflow</h5>
+        <p class="text-muted mb-0">Run and resolve data health checks.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-4">
+    <a class="card surface-card h-100 text-decoration-none" href="{{ url_for('enterprise.compliance') }}">
+      <div class="card-body">
+        <h5>Compliance Center</h5>
+        <p class="text-muted mb-0">Consent, retention, backup logs, and permission governance.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-4">
+    <a class="card surface-card h-100 text-decoration-none" href="{{ url_for('enterprise.integrations') }}">
+      <div class="card-body">
+        <h5>Integration Center</h5>
+        <p class="text-muted mb-0">API/webhook integrations and provider lifecycle controls.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-4">
+    <a class="card surface-card h-100 text-decoration-none" href="{{ url_for('enterprise.data_health') }}">
+      <div class="card-body">
+        <h5>Data Health</h5>
+        <p class="text-muted mb-0">Find missing data, stale records, and unresolved quality checks.</p>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Attendance Anomalies{% endblock %}
+{% block page_heading %}Attendance Anomalies{% endblock %}
+{% block page_subtitle %}Auto-detected issues: missed punches, duplicates, and unusual overtime.{% endblock %}
+{% block content %}
+<div class="card surface-card mb-4">
+  <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <p class="mb-1 text-muted">Open anomalies</p>
+      <h4 class="mb-0">{{ summary.open_anomalies }}</h4>
+    </div>
+    <form method="post" action="{{ url_for('attendance.scan_anomalies') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-search me-2"></i>Run anomaly scan</button>
+    </form>
+  </div>
+</div>
+
+<div class="card surface-card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table datatable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Employee ID</th>
+            <th>Type</th>
+            <th>Severity</th>
+            <th>Status</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in anomalies %}
+          <tr>
+            <td>{{ item.date }}</td>
+            <td>{{ item.employee_id }}</td>
+            <td>{{ item.anomaly_type.replace('_', ' ')|title }}</td>
+            <td>{{ item.severity|title }}</td>
+            <td>{{ item.status|title }}</td>
+            <td>{{ item.details }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-center text-muted">No anomalies found yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

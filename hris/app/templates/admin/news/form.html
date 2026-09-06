@@ -1,0 +1,28 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_subtitle_text = "Publish a dashboard update and send it to user notifications." %}
+{% set cancel_url = url_for('admin.news') %}
+{% set modal_intro = "Post a company news item to the HRIS dashboard and notification center." %}
+{% block modal_body %}
+<form method="post" enctype="multipart/form-data">
+  {{ form.hidden_tag() }}
+  {{ render_field(form.title) }}
+  {{ render_field(form.body, rows=6) }}
+  {{ render_field(form.image) }}
+  {% if announcement and announcement.image_url %}
+  <div class="mb-3">
+    <label class="form-label">Current image</label>
+    <div><img src="{{ announcement.image_url }}" alt="{{ announcement.title }}" class="rounded-3 border" style="max-width: 240px; width: 100%; height: auto;"></div>
+  </div>
+  {% endif %}
+  <div class="form-text mb-3">You can use HTML formatting like headings, paragraphs, lists, links, and highlighted sections.</div>
+  <div class="form-check mb-4">
+    {{ form.is_active(class="form-check-input") }}
+    {{ form.is_active.label(class="form-check-label") }}
+  </div>
+  <div class="d-flex gap-2">
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-light-secondary" href="{{ cancel_url }}" data-modal-close="true">Cancel</a>
+  </div>
+</form>
+{% endblock %}

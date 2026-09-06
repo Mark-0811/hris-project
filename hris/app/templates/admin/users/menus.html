@@ -1,0 +1,119 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% set page_subtitle_text = "Choose exactly which sidebar links " ~ user.username ~ " can see and open." %}
+{% set cancel_url = url_for('admin.users') %}
+{% set modal_intro = "This menu set becomes the user's effective navigation and linked page access." %}
+{% block modal_body %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="menu_action" id="menuActionInput" value="save">
+
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <button type="button" class="btn btn-light-primary" id="selectRecommendedMenus">Select Recommended</button>
+    <button type="button" class="btn btn-light-secondary" id="clearAllMenus">Clear All</button>
+  </div>
+
+  <div class="alert alert-light-primary mb-4">
+    <div class="fw-semibold mb-1">Role: {{ user.role.name if user.role else "Unassigned" }}</div>
+    <div class="text-muted small">Recommended links for this role are pre-marked below.</div>
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label">Access request / change note</label>
+    <textarea class="form-control" name="request_reason" rows="2" placeholder="Optional note for audit and access request flow."></textarea>
+  </div>
+
+  <div class="row g-4">
+    {% for section in menu_sections %}
+    <div class="col-12">
+      <div class="card surface-card border-0">
+        <div class="card-body">
+          <h5 class="mb-3">{{ section["title"] }}</h5>
+          {% for group in section["items"] %}
+            {% if group["label"] %}
+            <div class="mb-3">
+              <div class="text-uppercase small fw-semibold text-primary mb-2">{{ group["label"] }}</div>
+            {% endif %}
+            <div class="row g-3">
+              {% for item in group["items"] %}
+              <div class="col-12 col-md-6">
+                <label class="d-flex align-items-start gap-3 p-3 rounded-3 border menu-access-option">
+                  <input
+                    class="form-check-input mt-1 menu-access-checkbox"
+                    type="checkbox"
+                    name="menu_keys"
+                    value="{{ item.key }}"
+                    data-recommended="{{ '1' if item.key in recommended_menu_keys else '0' }}"
+                    {% if item.key in selected_menu_keys %}checked{% endif %}
+                  >
+                  <span>
+                    <span class="fw-semibold d-block">{{ item.label }}</span>
+                    <span class="text-muted small">{{ item.endpoint }}</span>
+                  </span>
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+            {% if group["label"] %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="d-flex gap-2 mt-4">
+    <button class="btn btn-primary" type="submit">Save Menu Access</button>
+    <button class="btn btn-light-primary" type="submit" onclick="document.getElementById('menuActionInput').value='reset_recommended'">Reset To Recommended</button>
+    <button class="btn btn-light-secondary" type="submit" onclick="document.getElementById('menuActionInput').value='clear_all'">Save As Empty</button>
+    <button class="btn btn-light-warning" type="submit" onclick="document.getElementById('menuActionInput').value='emergency_lock'">Emergency Lock</button>
+    <button class="btn btn-outline-primary" type="submit" onclick="document.getElementById('menuActionInput').value='request_access'">Submit As Access Request</button>
+    <a class="btn btn-light-secondary" href="{{ cancel_url }}" data-modal-close="true">Cancel</a>
+  </div>
+
+  <div class="card surface-card border-0 mt-4">
+    <div class="card-body">
+      <h6 class="mb-3">Preview</h6>
+      <div id="menuPreviewList" class="d-flex flex-wrap gap-2">
+        {% for key in selected_menu_keys %}
+        <span class="badge bg-light-primary text-primary">{{ key }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.getElementById("selectRecommendedMenus")?.addEventListener("click", () => {
+    document.querySelectorAll(".menu-access-checkbox").forEach((checkbox) => {
+      checkbox.checked = checkbox.dataset.recommended === "1";
+    });
+    refreshMenuPreview();
+  });
+
+  document.getElementById("clearAllMenus")?.addEventListener("click", () => {
+    document.querySelectorAll(".menu-access-checkbox").forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+    refreshMenuPreview();
+  });
+
+  function refreshMenuPreview() {
+    const preview = document.getElementById("menuPreviewList");
+    if (!preview) return;
+    const labels = Array.from(document.querySelectorAll(".menu-access-checkbox:checked"))
+      .map((checkbox) => checkbox.closest("label")?.querySelector(".fw-semibold")?.textContent?.trim())
+      .filter(Boolean);
+    preview.innerHTML = labels.length
+      ? labels.map((label) => `<span class="badge bg-light-primary text-primary">${label}</span>`).join("")
+      : '<span class="text-muted">No menu links selected.</span>';
+  }
+
+  document.querySelectorAll(".menu-access-checkbox").forEach((checkbox) => {
+    checkbox.addEventListener("change", refreshMenuPreview);
+  });
+</script>
+{% endblock %}

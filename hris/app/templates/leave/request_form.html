@@ -1,0 +1,28 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_title = "Leave Request" %}
+{% set page_subtitle_text = "File a leave request with date range and justification." %}
+{% set cancel_url = url_for('leave.index') %}
+{% set modal_intro = "Employees and admins can still file leave even without enough credits. If credits are not available, the request will be recorded as unpaid leave." %}
+{% block modal_body %}
+<div class="form-section">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="row">
+      <div class="col-md-6">{{ render_field(form.employee_id) }}</div>
+      <div class="col-md-6">{{ render_field(form.leave_type_id) }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">{{ render_field(form.duration_type) }}</div>
+      <div class="col-md-6"></div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">{{ render_field(form.start_date) }}</div>
+      <div class="col-md-6">{{ render_field(form.end_date) }}</div>
+    </div>
+    {{ render_field(form.reason, rows=4) }}
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

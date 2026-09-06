@@ -1,0 +1,87 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_subtitle_text = "Capture identity, employment, government IDs, and emergency details in one flexible profile screen." %}
+{% set cancel_url = url_for('employees.list_employee') %}
+{% set modal_intro = "Maintain employee information in a modal workflow without leaving the directory." %}
+{% set modal_size = "modal-xl" %}
+{% block modal_body %}
+<form method="post">
+  {{ form.hidden_tag() }}
+  <div class="row g-4">
+    <div class="col-12 col-xl-6">
+      <div class="form-section">
+        <h5>Personal Information</h5>
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.first_name) }}</div>
+          <div class="col-md-6">{{ render_field(form.last_name) }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.middle_name) }}</div>
+          <div class="col-md-6">{{ render_field(form.suffix) }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">{{ render_field(form.birthdate) }}</div>
+          <div class="col-md-4">{{ render_field(form.gender) }}</div>
+          <div class="col-md-4">{{ render_field(form.civil_status) }}</div>
+        </div>
+        {{ render_field(form.address, rows=3) }}
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.contact_number) }}</div>
+          <div class="col-md-6">{{ render_field(form.personal_email) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-6">
+      <div class="form-section">
+        <h5>Employment Setup</h5>
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.company_email) }}</div>
+          <div class="col-md-6">{{ render_field(form.employment_type) }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.department_id) }}</div>
+          <div class="col-md-6">{{ render_field(form.position_id) }}</div>
+        </div>
+        {{ render_field(form.manager_id) }}
+        {{ render_field(form.shift_id) }}
+        <div class="row">
+          <div class="col-md-4">{{ render_field(form.date_hired) }}</div>
+          <div class="col-md-4">{{ render_field(form.date_regularized) }}</div>
+          <div class="col-md-4">{{ render_field(form.employment_status) }}</div>
+        </div>
+        {{ render_field(form.profile_image) }}
+      </div>
+    </div>
+    <div class="col-12 col-xl-6">
+      <div class="form-section">
+        <h5>Government IDs</h5>
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.sss_no) }}</div>
+          <div class="col-md-6">{{ render_field(form.tin_no) }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.philhealth_no) }}</div>
+          <div class="col-md-6">{{ render_field(form.pagibig_no) }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.badge_id) }}</div>
+          <div class="col-md-6">{{ render_field(form.nfc_uid) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-6">
+      <div class="form-section">
+        <h5>Emergency Contact</h5>
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.emergency_contact_name) }}</div>
+          <div class="col-md-6">{{ render_field(form.emergency_contact_number) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mt-4 d-flex gap-2">
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

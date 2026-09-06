@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Integration Center{% endblock %}
+{% block page_heading %}Integration Center{% endblock %}
+{% block page_subtitle %}Manage API connections, webhooks, and operational integrations.{% endblock %}
+{% block content %}
+<div class="card surface-card">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-12 col-md-3"><div class="p-3 border rounded-3"><div class="text-muted">Total integrations</div><h4 class="mb-0">{{ summary.integrations }}</h4></div></div>
+      <div class="col-12 col-md-3"><div class="p-3 border rounded-3"><div class="text-muted">Active integrations</div><h4 class="mb-0">{{ summary.active_integrations }}</h4></div></div>
+      <div class="col-12 col-md-3"><div class="p-3 border rounded-3"><div class="text-muted">Webhook subscriptions</div><h4 class="mb-0">{{ summary.webhooks }}</h4></div></div>
+      <div class="col-12 col-md-3"><div class="p-3 border rounded-3"><div class="text-muted">Help articles</div><h4 class="mb-0">{{ summary.help_articles }}</h4></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_title = "Salary Setup" %}
+{% set page_subtitle_text = "Store compensation rates used by payroll generation." %}
+{% set cancel_url = url_for('payroll.index') %}
+{% set modal_intro = "Manage employee salary settings in a modal form." %}
+{% block modal_body %}
+<div class="form-section"><form method="post">{{ form.hidden_tag() }}{{ render_field(form.employee_id) }}<div class="row"><div class="col-md-4">{{ render_field(form.basic_salary) }}</div><div class="col-md-4">{{ render_field(form.daily_rate) }}</div><div class="col-md-4">{{ render_field(form.hourly_rate) }}</div></div>{{ render_field(form.effective_date) }}{{ form.submit(class="btn btn-primary") }} <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a></form></div>
+{% endblock %}

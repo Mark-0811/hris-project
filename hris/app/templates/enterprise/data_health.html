@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Data Health{% endblock %}
+{% block page_heading %}Data Health Dashboard{% endblock %}
+{% block page_subtitle %}Detect missing records, inconsistencies, and unresolved data quality issues.{% endblock %}
+{% block content %}
+<div class="card surface-card">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-12 col-md-6 col-xl-3"><div class="p-3 border rounded-3"><div class="text-muted">Unlinked users</div><h4 class="mb-0">{{ summary.unlinked_users }}</h4></div></div>
+      <div class="col-12 col-md-6 col-xl-3"><div class="p-3 border rounded-3"><div class="text-muted">Missing company emails</div><h4 class="mb-0">{{ summary.missing_company_emails }}</h4></div></div>
+      <div class="col-12 col-md-6 col-xl-3"><div class="p-3 border rounded-3"><div class="text-muted">Pending leave requests</div><h4 class="mb-0">{{ summary.pending_leave_requests }}</h4></div></div>
+      <div class="col-12 col-md-6 col-xl-3"><div class="p-3 border rounded-3"><div class="text-muted">Unresolved checks</div><h4 class="mb-0">{{ summary.unresolved_data_checks }}</h4></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

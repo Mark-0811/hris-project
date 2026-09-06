@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}My Workspace{% endblock %}
+{% block page_heading %}My Workspace{% endblock %}
+{% block page_subtitle %}A daily employee workspace for attendance, requests, documents, and updates.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12">
+    <div class="card experience-hero-card">
+      <div class="card-body">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+          <div>
+            <h4 class="mb-2">Welcome back{% if workspace.employee %}, {{ workspace.employee.first_name }}{% endif %}</h4>
+            <p class="text-muted mb-0">Your workspace keeps the next action, current status, and personal records in one place.</p>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            {% for action in workspace.quick_actions %}
+            <a class="btn btn-light-primary" href="{{ url_for(action.endpoint) }}">
+              <i class="{{ action.icon }}"></i>
+              <span>{{ action.label }}</span>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% for card in workspace.cards %}
+  <div class="col-xl-3 col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <p class="text-muted text-uppercase small mb-2">{{ card.label }}</p>
+        <h3 class="mb-2">{{ card.value }}</h3>
+        <p class="mb-0 text-muted">{{ card.detail }}</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="col-xl-8">
+    <div class="card h-100">
+      <div class="card-header">
+        <h4 class="card-title">What needs attention</h4>
+      </div>
+      <div class="card-body">
+        {% if workspace.unresolved %}
+        <div class="list-group list-group-flush">
+          {% for item in workspace.unresolved %}
+          <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="{{ url_for(item.endpoint) }}">
+            <span>{{ item.label }}</span>
+            <i class="bi bi-arrow-right-short"></i>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="experience-empty-state">
+          <i class="bi bi-check2-circle"></i>
+          <div>
+            <h5 class="mb-1">You are up to date</h5>
+            <p class="mb-0">There are no urgent actions blocking your day right now.</p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="card-title">Notifications</h4>
+        <span class="badge bg-light-primary">{{ workspace.unread_notifications }} unread</span>
+      </div>
+      <div class="card-body">
+        {% for item in workspace.notifications %}
+        <div class="experience-mini-feed-item">
+          <h6 class="mb-1">{{ item.title }}</h6>
+          <p class="mb-1 text-muted">{{ item.message }}</p>
+          <small class="text-muted">{{ item.created_at.strftime("%b %d, %Y %I:%M %p") if item.created_at else "" }}</small>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No alerts yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h4 class="card-title">Recent requests</h4>
+      </div>
+      <div class="card-body">
+        {% for item in workspace.leave_requests %}
+        <div class="experience-list-row">
+          <div>
+            <strong>{{ item.leave_type.name if item.leave_type else "Leave" }}</strong>
+            <div class="text-muted">{{ item.start_date }} to {{ item.end_date }}</div>
+          </div>
+          <span class="badge bg-light-secondary">{{ item.status.replace('_', ' ')|title }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No recent requests yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h4 class="card-title">Documents and payslips</h4>
+      </div>
+      <div class="card-body">
+        {% if workspace.documents or workspace.payslips %}
+        <div class="experience-list-row-wrap">
+          {% for item in workspace.documents %}
+          <div class="experience-chip">
+            <i class="bi bi-file-earmark-text"></i>
+            <span>{{ item.document_type.replace('_', ' ')|title }}</span>
+          </div>
+          {% endfor %}
+          {% for item in workspace.payslips %}
+          <div class="experience-chip">
+            <i class="bi bi-receipt"></i>
+            <span>{{ item.cutoff.cutoff_name if item.cutoff else "Payslip" }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Your locker will show documents and payroll files as soon as they are uploaded.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h4 class="card-title">Learning and certifications</h4>
+      </div>
+      <div class="card-body">
+        {% for item in workspace.learning_items %}
+        <div class="experience-list-row">
+          <div>
+            <strong>{{ item.course.title if item.course else "Training" }}</strong>
+            <div class="text-muted">Status: {{ item.training.status.replace('_', ' ')|title }}</div>
+          </div>
+          <span class="badge bg-light-info">{{ item.training.expires_at or "No expiry" }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No assigned learning items yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h4 class="card-title">Company updates</h4>
+      </div>
+      <div class="card-body">
+        {% for item in workspace.announcements %}
+        <div class="experience-mini-feed-item">
+          <h6 class="mb-1">{{ item.title }}</h6>
+          <p class="mb-0 text-muted">{{ item.body|striptags }}</p>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No announcements posted yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

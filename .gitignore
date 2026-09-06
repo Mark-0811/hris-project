@@ -1,0 +1,54 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.docker.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# Local databases and runtime state
+instance/
+hris/instance/
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+
+# Uploaded/runtime files
+hris/app/static/uploads/
+!hris/app/static/uploads/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# Build and generated artifacts
+dist/
+build/
+tmp_patch/
+*.egg-info/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Docker/local logs
+*.log
+docker-compose.override.yml

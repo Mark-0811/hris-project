@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}My Requests{% endblock %}
+{% block page_heading %}My Requests{% endblock %}
+{% block page_subtitle %}Track leave, support, privacy, profile, and document requests with clearer status history.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-lg-3"><div class="experience-metric-panel"><span class="text-muted d-block">Leave requests</span><strong>{{ requests_data.leave_requests|length }}</strong></div></div>
+          <div class="col-lg-3"><div class="experience-metric-panel"><span class="text-muted d-block">HR tickets</span><strong>{{ requests_data.tickets|length }}</strong></div></div>
+          <div class="col-lg-3"><div class="experience-metric-panel"><span class="text-muted d-block">Privacy requests</span><strong>{{ requests_data.privacy_requests|length }}</strong></div></div>
+          <div class="col-lg-3"><div class="experience-metric-panel"><span class="text-muted d-block">Profile update requests</span><strong>{{ requests_data.profile_requests|length }}</strong></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-7">
+    <div class="card h-100">
+      <div class="card-header"><h4 class="card-title">Leave request wizard</h4></div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {{ leave_form.hidden_tag() }}
+          <div class="row g-3">
+            <div class="col-md-6">{{ leave_form.leave_type_id.label(class="form-label") }}{{ leave_form.leave_type_id(class="form-select") }}</div>
+            <div class="col-md-6">{{ leave_form.duration_type.label(class="form-label") }}{{ leave_form.duration_type(class="form-select") }}</div>
+            <div class="col-md-6">{{ leave_form.start_date.label(class="form-label") }}{{ leave_form.start_date(class="form-control") }}</div>
+            <div class="col-md-6">{{ leave_form.end_date.label(class="form-label") }}{{ leave_form.end_date(class="form-control") }}</div>
+            <div class="col-12">{{ leave_form.reason.label(class="form-label") }}{{ leave_form.reason(class="form-control", rows="4", placeholder="Explain the leave request clearly so the timeline and approval queue stay easy to review.") }}</div>
+          </div>
+          {{ leave_form.employee_id(type="hidden") }}
+          <div class="alert alert-light-primary mt-3 mb-0">Leave policy hints and approval flow are shown below once the request is filed.</div>
+          <div class="mt-3 d-grid">{{ leave_form.submit(class="btn btn-primary") }}</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="card h-100">
+      <div class="card-header"><h4 class="card-title">Support and privacy</h4></div>
+      <div class="card-body">
+        <form method="post" novalidate class="mb-4">
+          {{ ticket_form.hidden_tag() }}
+          <div class="mb-2">{{ ticket_form.category.label(class="form-label") }}{{ ticket_form.category(class="form-select") }}</div>
+          <div class="mb-2">{{ ticket_form.subject.label(class="form-label") }}{{ ticket_form.subject(class="form-control") }}</div>
+          <div class="mb-2">{{ ticket_form.description.label(class="form-label") }}{{ ticket_form.description(class="form-control", rows="3") }}</div>
+          <div class="mb-2">{{ ticket_form.priority.label(class="form-label") }}{{ ticket_form.priority(class="form-select") }}</div>
+          {{ ticket_form.submit(class="btn btn-light-primary w-100") }}
+        </form>
+        <hr>
+        <form method="post" novalidate class="mb-4">
+          {{ privacy_form.hidden_tag() }}
+          <div class="mb-2">{{ privacy_form.request_type.label(class="form-label") }}{{ privacy_form.request_type(class="form-select") }}</div>
+          <div class="mb-2">{{ privacy_form.details.label(class="form-label") }}{{ privacy_form.details(class="form-control", rows="3") }}</div>
+          {{ privacy_form.submit(class="btn btn-light-secondary w-100") }}
+        </form>
+        <hr>
+        <form method="post" novalidate>
+          {{ document_form.hidden_tag() }}
+          <div class="mb-2">{{ document_form.document_type.label(class="form-label") }}{{ document_form.document_type(class="form-select") }}</div>
+          <div class="mb-2">{{ document_form.notes.label(class="form-label") }}{{ document_form.notes(class="form-control", rows="3") }}</div>
+          {{ document_form.submit(class="btn btn-light-success w-100") }}
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-8">
+    <div class="card h-100">
+      <div class="card-header"><h4 class="card-title">Leave history and approval timeline</h4></div>
+      <div class="card-body">
+        {% for item in requests_data.leave_requests %}
+        <div class="experience-request-card">
+          <div class="d-flex justify-content-between gap-3 flex-wrap">
+            <div>
+              <h5 class="mb-1">{{ item.leave_type.name if item.leave_type else "Leave" }}</h5>
+              <p class="text-muted mb-2">{{ item.start_date }} to {{ item.end_date }} · {{ item.days }} day(s)</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              <span class="badge bg-light-secondary">{{ item.status.replace('_', ' ')|title }}</span>
+              {% if item.status.startswith('pending') %}
+              <form method="post" action="{{ url_for('experience.cancel_leave_request', request_id=item.id) }}"><button class="btn btn-sm btn-light-danger" type="submit">Cancel</button></form>
+              {% endif %}
+            </div>
+          </div>
+          <div class="experience-timeline">
+            {% for step in requests_data.leave_timelines.get(item.id, []) %}
+            <div class="experience-timeline-item">
+              <span class="badge bg-light-{{ step.tone }}">{{ step.label }}</span>
+              <small class="text-muted">{{ step.detail }}</small>
+            </div>
+            {% endfor %}
+          </div>
+          {% if item.status.startswith('pending') %}
+          <form method="post" class="mt-3">
+            <input type="hidden" name="modification_request_id" value="{{ item.id }}">
+            <label class="form-label">Need a modification instead?</label>
+            <div class="input-group">
+              <input class="form-control" type="text" name="modification_details" placeholder="Describe the change you need.">
+              <button class="btn btn-light-primary" type="submit">Request change</button>
+            </div>
+          </form>
+          {% endif %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No leave requests yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-header"><h4 class="card-title">Other request queues</h4></div>
+      <div class="card-body">
+        <h6>HR tickets</h6>
+        {% for item in requests_data.tickets %}
+        <div class="experience-list-row">
+          <div><strong>{{ item.subject }}</strong><div class="text-muted">{{ item.category.replace('_', ' ')|title }}</div></div>
+          <span class="badge bg-light-secondary">{{ item.status.replace('_', ' ')|title }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted">No HR tickets yet.</p>
+        {% endfor %}
+        <hr>
+        <h6>Privacy requests</h6>
+        {% for item in requests_data.privacy_requests %}
+        <div class="experience-list-row">
+          <div><strong>{{ item.request_type.replace('_', ' ')|title }}</strong><div class="text-muted">{{ item.details }}</div></div>
+          <span class="badge bg-light-secondary">{{ item.status.replace('_', ' ')|title }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted">No privacy requests yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

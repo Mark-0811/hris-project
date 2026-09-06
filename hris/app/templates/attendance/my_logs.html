@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}My Attendance{% endblock %}
+{% block page_heading %}My Attendance{% endblock %}
+{% block page_subtitle %}Review your own time-in and time-out history using your employee account.{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-xl-4">
+    <div class="card surface-card">
+      <div class="card-header"><h4 class="card-title mb-0">Employee Profile</h4></div>
+      <div class="card-body">
+        {% if employee %}
+        <div class="mb-2"><strong>{{ employee.full_name }}</strong></div>
+        <div class="text-muted mb-2">{{ employee.employee_code }}</div>
+        <div class="text-muted mb-2">Badge ID: {{ employee.badge_id or "Not set" }}</div>
+        <div class="text-muted">NFC UID: {{ employee.nfc_uid or "Not set" }}</div>
+        {% else %}
+        <p class="text-muted mb-0">This account is not linked to an employee record yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-8">
+    <div class="card surface-card table-shell">
+      <div class="card-header"><h4 class="card-title mb-0">My Logs</h4></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle" id="myLogsTable">
+            <thead><tr><th>Date</th><th>Time In</th><th>Time Out</th><th>Status</th><th>Remarks</th></tr></thead>
+            <tbody id="myLogsBody">
+              {% for record in records %}
+              <tr data-record-id="{{ record.id }}">
+                <td>{{ record.date }}</td>
+                <td>{{ record.time_in.strftime('%Y-%m-%d %H:%M') if record.time_in else '-' }}</td>
+                <td>{{ record.time_out.strftime('%Y-%m-%d %H:%M') if record.time_out else '-' }}</td>
+                <td><span class="status-chip">{{ record.status|title }}</span></td>
+                <td>{{ record.remarks or '-' }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center py-5 text-muted">No attendance logs yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  const employeeId = {{ employee.id if employee else 'null' }};
+  const attendanceSocket = io("/attendance-live");
+  const bodyEl = document.getElementById("myLogsBody");
+
+  function formatDateTime(value) {
+    if (!value) return "-";
+    return new Date(value).toLocaleString();
+  }
+
+  function upsertAttendanceRow(record) {
+    if (!bodyEl) return;
+    const emptyRow = bodyEl.querySelector("td[colspan='5']");
+    if (emptyRow) {
+      emptyRow.parentElement.remove();
+    }
+
+    let row = bodyEl.querySelector(`[data-record-id="${record.id}"]`);
+    if (!row) {
+      row = document.createElement("tr");
+      row.setAttribute("data-record-id", record.id);
+      row.innerHTML = `
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><span class="status-chip"></span></td>
+        <td></td>
+      `;
+      bodyEl.prepend(row);
+    }
+
+    row.children[0].textContent = record.date || "-";
+    row.children[1].textContent = formatDateTime(record.time_in);
+    row.children[2].textContent = formatDateTime(record.time_out);
+    row.children[3].querySelector(".status-chip").textContent = (record.status || "-").replaceAll("_", " ");
+    row.children[4].textContent = record.remarks || "-";
+  }
+
+  attendanceSocket.on("attendance_updated", (payload) => {
+    if (employeeId && payload.employee_id === employeeId) {
+      upsertAttendanceRow(payload.record);
+    }
+  });
+</script>
+{% endblock %}

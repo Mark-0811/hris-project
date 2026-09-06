@@ -1,0 +1,19 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_title = "Attendance Adjustment" %}
+{% set page_subtitle_text = "Request a correction for a recorded time-in or time-out entry." %}
+{% set cancel_url = url_for('attendance.index') %}
+{% set modal_intro = "Submit an attendance correction through this modal dialog." %}
+{% block modal_body %}
+<div class="form-section">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    {{ render_field(form.attendance_record_id) }}
+    {{ render_field(form.new_time_in) }}
+    {{ render_field(form.new_time_out) }}
+    {{ render_field(form.reason, rows=4) }}
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_title = "Payroll Cutoff" %}
+{% set page_subtitle_text = "Define the payroll coverage period and current processing status." %}
+{% set cancel_url = url_for('payroll.index') %}
+{% set modal_intro = "Payroll setup now opens in a modal window." %}
+{% block modal_body %}
+<div class="form-section"><form method="post">{{ form.hidden_tag() }}{{ render_field(form.cutoff_name) }}<div class="row"><div class="col-md-4">{{ render_field(form.start_date) }}</div><div class="col-md-4">{{ render_field(form.end_date) }}</div><div class="col-md-4">{{ render_field(form.status) }}</div></div>{{ form.submit(class="btn btn-primary") }} <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a></form></div>
+{% endblock %}

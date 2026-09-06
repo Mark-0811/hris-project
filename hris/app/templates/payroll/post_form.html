@@ -1,0 +1,19 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_title = "Post Payroll" %}
+{% set page_subtitle_text = "Finalize generated payroll entries and notify employees." %}
+{% set cancel_url = url_for('payroll.index') %}
+{% set modal_intro = "Post payroll after generation so employees can treat it as final." %}
+{% block modal_body %}
+<div class="form-section">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    {{ render_field(form.cutoff_id) }}
+    <div class="alert alert-light-primary mb-3">
+      Posting payroll marks generated entries as final and sends in-app notifications to employees.
+    </div>
+    {{ form.submit(class="btn btn-primary", value="Post payroll") }}
+    <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

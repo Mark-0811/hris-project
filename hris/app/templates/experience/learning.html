@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Learning{% endblock %}
+{% block page_heading %}Learning{% endblock %}
+{% block page_subtitle %}Track assigned learning, certifications, growth signals, and released performance items.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-xl-7">
+    <div class="card h-100">
+      <div class="card-header"><h4 class="card-title">Assigned learning and certifications</h4></div>
+      <div class="card-body">
+        {% for item in learning.trainings %}
+        <div class="experience-list-row">
+          <div><strong>{{ item.course.title if item.course else "Training item" }}</strong><div class="text-muted">Status: {{ item.training.status.replace('_', ' ')|title }}</div></div>
+          <span class="badge bg-light-secondary">{{ item.training.expires_at or "No expiry" }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No assigned learning records yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="card mb-4">
+      <div class="card-header"><h4 class="card-title">Suggested courses</h4></div>
+      <div class="card-body">
+        {% for item in learning.suggested_courses %}
+        <div class="experience-chip justify-content-between d-flex w-100 mb-2"><span>{{ item.title }}</span><small>{{ item.required_for_role or "Open to all" }}</small></div>
+        {% else %}
+        <p class="text-muted mb-0">No course catalog is available yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h4 class="card-title">Growth notes</h4></div>
+      <div class="card-body">
+        {% if learning.calibrations %}
+        {% for item in learning.calibrations %}
+        <div class="experience-list-row">
+          <div><strong>{{ item.review_cycle }}</strong><div class="text-muted">{{ item.nine_box or "No 9-box" }} · {{ item.calibrated_rating or "No rating" }}</div></div>
+          <span class="badge bg-light-info">Released</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted mb-3">No released calibration sessions yet.</p>
+        {% endif %}
+
+        {% if learning.succession_candidates %}
+        <hr>
+        <h6>Succession planning</h6>
+        {% for item in learning.succession_candidates %}
+        <div class="experience-list-row">
+          <div><strong>Target role ID {{ item.target_position_id }}</strong><div class="text-muted">{{ item.readiness_level.replace('_', ' ')|title }}</div></div>
+          <span class="badge bg-light-success">Talent pool</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

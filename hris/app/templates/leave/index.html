@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Leave{% endblock %}
+{% block page_heading %}Leave{% endblock %}
+{% block page_subtitle %}Manage leave filing, approvals, and granted leave balances in one place.{% endblock %}
+{% block page_actions %}
+<a class="btn btn-primary" data-modal-link="true" href="{{ url_for('leave.create_request') }}">File Leave</a>
+{% if current_user.role and current_user.role.name in ['Super Admin', 'HR Admin'] %}
+<a class="btn btn-light-primary" data-modal-link="true" href="{{ url_for('leave.create_type') }}">New Leave Type</a>
+<a class="btn btn-light-primary" data-modal-link="true" href="{{ url_for('leave.create_balance') }}">Grant Leave</a>
+<a class="btn btn-light-primary" data-modal-link="true" href="{{ url_for('leave.adjust_balance') }}">Adjust Leave</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+  <div class="col-md-3"><div class="card metric-card metric-card-primary"><div class="card-body"><p class="text-white-50">Leave Types</p><h2 class="text-white">{{ summary.leave_types }}</h2></div></div></div>
+  <div class="col-md-3"><div class="card metric-card metric-card-warning"><div class="card-body"><p class="text-white-50">Pending</p><h2 class="text-white">{{ summary.pending_requests }}</h2></div></div></div>
+  <div class="col-md-3"><div class="card metric-card metric-card-success"><div class="card-body"><p class="text-white-50">Approved</p><h2 class="text-white">{{ summary.approved_requests }}</h2></div></div></div>
+  <div class="col-md-3"><div class="card metric-card metric-card-info"><div class="card-body"><p class="text-white-50">Balances</p><h2 class="text-white">{{ summary.balances }}</h2></div></div></div>
+</div>
+<div class="row g-4">
+  <div class="col-12 col-xl-7">
+    <div class="card surface-card table-shell">
+      <div class="card-header"><h4 class="card-title mb-0">{{ 'My Leave Requests' if current_user.role and current_user.role.name == 'Employee' else 'Leave Requests' }}</h4></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle datatable">
+            <thead><tr><th>Employee</th><th>Type</th><th>Duration</th><th>Dates</th><th>Pay</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+              {% for item in requests %}
+              <tr>
+                <td>{{ item.employee.full_name if item.employee else "Unknown" }}</td>
+                <td>{{ item.leave_type.name if item.leave_type else "Unknown" }}</td>
+                <td>{{ item.duration_type.replace('_', ' ')|title }}</td>
+                <td>{{ item.start_date }} to {{ item.end_date }}</td>
+                <td><span class="badge {{ 'bg-light-success text-success' if item.is_paid else 'bg-light-warning text-warning' }}">{{ 'Paid' if item.is_paid else 'Unpaid' }}</span></td>
+                <td><span class="status-chip">{{ item.status|title }}</span></td>
+                <td class="text-end">
+                  {% if item.status == 'pending' and can_manage_leave_request(current_user, item) %}
+                  <form class="d-inline" method="post" action="{{ url_for('leave.approve_request', request_id=item.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-light-success" type="submit">Approve</button>
+                  </form>
+                  <form class="d-inline" method="post" action="{{ url_for('leave.disapprove_request', request_id=item.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-light-danger" type="submit">Disapprove</button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="7" class="text-center py-5 text-muted">No leave requests yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-5">
+    <div class="card surface-card mb-4">
+      <div class="card-header"><h4 class="card-title mb-0">{{ 'My Leave Credits' if current_user.role and current_user.role.name == 'Employee' else 'Leave Types' }}</h4></div>
+      <div class="card-body">
+        {% if current_user.role and current_user.role.name == 'Employee' %}
+          {% for item in leave_type_balances %}
+          <div class="d-flex justify-content-between mb-2">
+            <span>{{ item.leave_type.name }}</span>
+            <span class="text-muted">{{ item.remaining_credits }} remaining</span>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">No leave types configured.</p>
+          {% endfor %}
+        {% else %}
+          {% for leave_type in leave_types %}
+          <div class="d-flex justify-content-between mb-2">
+            <span>{{ leave_type.name }}</span>
+            <span class="text-muted">{{ leave_type.default_credits }} credits</span>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">No leave types configured.</p>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="card surface-card">
+      <div class="card-header"><h4 class="card-title mb-0">{{ 'My Granted Leave Balances' if current_user.role and current_user.role.name == 'Employee' else 'Granted Leave Balances' }}</h4></div>
+      <div class="card-body">
+        {% if current_user.role and current_user.role.name == 'Employee' %}
+          {% for item in leave_type_balances %}
+          <div class="mb-3">
+            <strong>{{ item.leave_type.name }}</strong>
+            <div class="text-muted small">{{ item.remaining_credits }} remaining out of {{ item.total_credits }} granted for {{ item.year }}</div>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">No granted leave balances found for your account yet.</p>
+          {% endfor %}
+        {% else %}
+          {% for balance in balances[:8] %}
+          <div class="mb-3">
+            <strong>{{ balance.employee.full_name if balance.employee else "Unknown" }}</strong>
+            <div class="text-muted small">{{ balance.leave_type.name if balance.leave_type else "Unknown" }} · {{ balance.remaining_credits }} remaining</div>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">No leave balances allocated yet.</p>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

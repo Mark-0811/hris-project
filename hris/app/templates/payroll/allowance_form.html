@@ -1,0 +1,9 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_title = "Allowance" %}
+{% set page_subtitle_text = "Add a recurring or effective-dated payroll allowance." %}
+{% set cancel_url = url_for('payroll.index') %}
+{% set modal_intro = "Add payroll components through a modal dialog." %}
+{% block modal_body %}
+<div class="form-section"><form method="post">{{ form.hidden_tag() }}{{ render_field(form.employee_id) }}{{ render_field(form.allowance_type) }}<div class="row"><div class="col-md-6">{{ render_field(form.amount) }}</div><div class="col-md-6">{{ render_field(form.effective_date) }}</div></div><div class="form-check mb-4">{{ form.taxable(class='form-check-input') }} {{ form.taxable.label(class='form-check-label') }}</div>{{ form.submit(class="btn btn-primary") }} <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a></form></div>
+{% endblock %}

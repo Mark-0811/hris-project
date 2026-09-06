@@ -1,0 +1,9 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_title = "Generate Payroll" %}
+{% set page_subtitle_text = "Create or refresh payroll entries for a selected cutoff." %}
+{% set cancel_url = url_for('payroll.index') %}
+{% set modal_intro = "Run payroll generation from a focused modal action." %}
+{% block modal_body %}
+<div class="form-section"><form method="post">{{ form.hidden_tag() }}{{ render_field(form.cutoff_id) }}{{ form.submit(class="btn btn-primary") }} <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a></form></div>
+{% endblock %}

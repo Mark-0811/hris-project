@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Forbidden{% endblock %}
+{% block page_heading %}Access denied{% endblock %}
+{% block page_subtitle %}Your account does not currently have the required menu access for this page.{% endblock %}
+{% block content %}
+<div class="card surface-card">
+  <div class="card-body p-4">
+    <h1 class="h4">Access denied</h1>
+    <p class="text-muted mb-3">Your account does not have permission to view this page.</p>
+    {% if g.access_denied_context and g.access_denied_context.required_labels %}
+    <div class="mb-3">
+      <span class="text-muted d-block mb-2">Required access</span>
+      <div class="d-flex flex-wrap gap-2">
+        {% for label in g.access_denied_context.required_labels %}
+        <span class="badge bg-light-danger text-danger">{{ label }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-primary" href="{{ url_for('auth.profile') }}">Open Profile</a>
+      {% if current_user.is_authenticated %}
+      <a class="btn btn-light-primary" href="{{ url_for('auth.profile') }}">Review my access summary</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

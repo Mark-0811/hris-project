@@ -1,0 +1,24 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_subtitle_text = "Attach a role title to the right department so the org structure stays consistent as the system grows." %}
+{% set cancel_url = url_for('employees.list_position') %}
+{% set modal_intro = "Position setup is presented in a focused modal form." %}
+{% block modal_body %}
+<div class="row g-4">
+  <div class="col-12 col-xl-7">
+    <div class="form-section">
+      <h5>Position Details</h5>
+      <form method="post">
+        {{ form.hidden_tag() }}
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.name) }}</div>
+          <div class="col-md-6">{{ render_field(form.department_id) }}</div>
+        </div>
+        {{ render_field(form.description, rows=4) }}
+        {{ form.submit(class="btn btn-primary") }}
+        <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

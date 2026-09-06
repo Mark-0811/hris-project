@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Employees{% endblock %}
+{% block page_heading %}Employees{% endblock %}
+{% block page_subtitle %}Maintain the company employee master list in a cleaner, scalable workspace.{% endblock %}
+{% block page_actions %}
+<a class="btn btn-primary" data-modal-link="true" href="{{ url_for('employees.create_employee') }}"><i class="bi bi-plus-lg me-2"></i>Add Employee</a>
+<a class="btn btn-light-primary" href="{{ url_for('employees.import_employees') }}"><i class="bi bi-file-earmark-excel me-2"></i>Import Employees</a>
+{% endblock %}
+{% block content %}
+<div class="card surface-card table-shell">
+  <div class="card-header">
+    <h4 class="card-title mb-0">Employee Directory</h4>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle datatable">
+        <thead>
+          <tr>
+            <th>Employee Code</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Position</th>
+            <th>Schedule</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for employee in employees %}
+          <tr>
+            <td class="fw-semibold">{{ employee.employee_code }}</td>
+            <td>{{ employee.full_name }}</td>
+            <td>{{ employee.department.name if employee.department else "Unassigned" }}</td>
+            <td>{{ employee.position.name if employee.position else "Unassigned" }}</td>
+            {% set employee_shift = employee.shift_assignments.first() %}
+            <td>{{ employee_shift.shift.shift_name if employee_shift else "Default Office Shift" }}</td>
+            <td><span class="status-chip">{{ employee.status_label }}</span></td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-light-primary" href="{{ url_for('employees.detail_employee', employee_id=employee.id) }}">View</a>
+              <a class="btn btn-sm btn-light-secondary" data-modal-link="true" href="{{ url_for('employees.edit_employee', employee_id=employee.id) }}">Edit</a>
+              <form class="d-inline" method="post" action="{{ url_for('employees.toggle_employee', employee_id=employee.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm {{ 'btn-light-danger' if employee.employment_status == 'active' else 'btn-light-success' }}" type="submit">
+                  {{ 'Disable' if employee.employment_status == 'active' else 'Enable' }}
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">No employees have been added yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

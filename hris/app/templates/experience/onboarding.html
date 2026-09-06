@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Onboarding{% endblock %}
+{% block page_heading %}Onboarding{% endblock %}
+{% block page_subtitle %}Track onboarding progress, due dates, and which steps still need attention.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-xl-4">
+    <div class="card">
+      <div class="card-body">
+        <span class="text-muted d-block mb-2">Progress</span>
+        <h2 class="mb-3">{{ onboarding.progress }}%</h2>
+        <div class="progress progress-primary"><div class="progress-bar" role="progressbar" style="width: {{ onboarding.progress }}%"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header"><h4 class="card-title">Checklist</h4></div>
+      <div class="card-body">
+        {% for item in onboarding.items %}
+        <div class="experience-list-row">
+          <div><strong>{{ item.step_name }}</strong><div class="text-muted">Due {{ item.due_date or "Not set" }}</div></div>
+          <span class="badge bg-light-{{ 'success' if item.status == 'completed' else 'warning' }}">{{ item.status.replace('_', ' ')|title }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No onboarding checklist is assigned to your account right now.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

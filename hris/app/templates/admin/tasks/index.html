@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Task Inbox{% endblock %}
+{% block page_heading %}Task Inbox{% endblock %}
+{% block page_subtitle %}Track what needs action, what is waiting, and what is done today.{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+  <div class="col-12 col-xl-4">
+    <div class="card surface-card h-100">
+      <div class="card-body">
+        <h6 class="text-uppercase small text-primary mb-3">Approval SLA</h6>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Pending</span>
+          <strong>{{ sla_summary.pending_count }}</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Overdue ({{ sla_summary.sla_hours }}h)</span>
+          <strong class="{{ 'text-danger' if sla_summary.overdue_count else 'text-success' }}">{{ sla_summary.overdue_count }}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span class="text-muted">Oldest pending</span>
+          <strong>{{ sla_summary.oldest_age_hours }}h</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-8">
+    <div class="card surface-card">
+      <div class="card-body d-flex gap-2 flex-wrap">
+        <a class="btn {{ 'btn-primary' if status_filter == 'all' else 'btn-light-primary' }}" href="{{ url_for('admin.tasks', status='all') }}">All</a>
+        <a class="btn {{ 'btn-primary' if status_filter == 'needs_action' else 'btn-light-primary' }}" href="{{ url_for('admin.tasks', status='needs_action') }}">Needs Action</a>
+        <a class="btn {{ 'btn-primary' if status_filter == 'waiting' else 'btn-light-primary' }}" href="{{ url_for('admin.tasks', status='waiting') }}">Waiting</a>
+        <a class="btn {{ 'btn-primary' if status_filter == 'done_today' else 'btn-light-primary' }}" href="{{ url_for('admin.tasks', status='done_today') }}">Done Today</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card surface-card">
+  <div class="card-body">
+    {% for task in tasks %}
+    <div class="task-inbox-item task-priority-{{ task.priority }} {{ '' if loop.first else 'mt-3' }}">
+      <div class="d-flex justify-content-between align-items-start gap-3">
+        <div>
+          <h6 class="mb-1">{{ task.title }}</h6>
+          <p class="text-muted mb-2">{{ task.detail }}</p>
+          <span class="status-chip task-priority-chip">{{ task.status.replace('_', ' ')|title }}</span>
+        </div>
+        <a href="{{ url_for(task.endpoint) }}" class="btn btn-sm btn-outline-primary" {% if task.modal %}data-modal-link="true"{% endif %}>{{ task.action_label }}</a>
+      </div>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No tasks in this filter.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

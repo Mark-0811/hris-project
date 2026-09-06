@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Bulk Actions{% endblock %}
+{% block page_heading %}Bulk Actions{% endblock %}
+{% block page_subtitle %}Run common HR operations with fewer clicks and less context switching.{% endblock %}
+{% block content %}
+<div class="row g-4">
+  {% for action in actions %}
+  <div class="col-12 col-md-6 col-xl-4">
+    <div class="card surface-card h-100">
+      <div class="card-body">
+        <div class="bulk-action-title-row mb-2">
+          <span class="bulk-action-icon">
+            <i class="bi {{ action.icon }}"></i>
+          </span>
+          <h5 class="mb-0 bulk-action-title">{{ action.title }}</h5>
+        </div>
+        <p class="text-muted">{{ action.detail }}</p>
+        <a href="{{ url_for(action.endpoint) }}" class="btn btn-primary" {% if action.modal %}data-modal-link="true"{% endif %}>
+          {{ action.action_label }}
+        </a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12">
+    <div class="card surface-card">
+      <div class="card-body">
+        <p class="text-muted mb-0">No bulk actions are available for your current role.</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

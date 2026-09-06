@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}HR Tickets{% endblock %}
+{% block page_heading %}HR Ticketing{% endblock %}
+{% block page_subtitle %}Create, assign, and track internal HR support requests.{% endblock %}
+{% block content %}
+<div class="card surface-card mb-4">
+  <div class="card-header"><h5 class="mb-0">Create Ticket</h5></div>
+  <div class="card-body">
+    <form method="post" class="row g-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="col-12 col-md-3">
+        <select class="form-select" name="employee_id" required>
+          <option value="">Employee</option>
+          {% for e in employees %}
+          <option value="{{ e.id }}">{{ e.employee_code }} - {{ e.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-2">
+        <input type="text" class="form-control" name="category" placeholder="Category" value="benefits" required>
+      </div>
+      <div class="col-12 col-md-3">
+        <input type="text" class="form-control" name="subject" placeholder="Subject" required>
+      </div>
+      <div class="col-12 col-md-2">
+        <select class="form-select" name="priority">
+          <option value="low">Low</option>
+          <option value="normal" selected>Normal</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Create</button>
+      </div>
+      <div class="col-12">
+        <textarea class="form-control" rows="2" name="description" placeholder="Description" required></textarea>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card surface-card">
+  <div class="card-body table-responsive">
+    <table class="table datatable align-middle">
+      <thead><tr><th>ID</th><th>Employee</th><th>Category</th><th>Subject</th><th>Priority</th><th>Status</th><th>Assign/Update</th></tr></thead>
+      <tbody>
+        {% for item in tickets %}
+        <tr>
+          <td>#{{ item.id }}</td>
+          <td>{{ item.employee_id }}</td>
+          <td>{{ item.category }}</td>
+          <td>{{ item.subject }}</td>
+          <td>{{ item.priority|title }}</td>
+          <td>{{ item.status|replace('_',' ')|title }}</td>
+          <td>
+            <form method="post" action="{{ url_for('enterprise.update_ticket_status', ticket_id=item.id) }}" class="d-flex gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <select class="form-select form-select-sm" name="status">
+                <option value="open" {{ 'selected' if item.status == 'open' else '' }}>Open</option>
+                <option value="in_progress" {{ 'selected' if item.status == 'in_progress' else '' }}>In Progress</option>
+                <option value="resolved" {{ 'selected' if item.status == 'resolved' else '' }}>Resolved</option>
+                <option value="closed" {{ 'selected' if item.status == 'closed' else '' }}>Closed</option>
+              </select>
+              <select class="form-select form-select-sm" name="assigned_to_user_id">
+                <option value="">Unassigned</option>
+                {% for u in users %}
+                <option value="{{ u.id }}" {{ 'selected' if item.assigned_to_user_id == u.id else '' }}>{{ u.username }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted">No tickets yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

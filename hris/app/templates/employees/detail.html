@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Employee Details{% endblock %}
+{% block page_heading %}{{ employee.full_name }}{% endblock %}
+{% block page_subtitle %}{{ employee.employee_code }} · {{ employee.status_label }}{% endblock %}
+{% block page_actions %}
+<a class="btn btn-primary" href="{{ url_for('employees.edit_employee', employee_id=employee.id) }}"><i class="bi bi-pencil-square me-2"></i>Edit Employee</a>
+{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h4 class="card-title mb-0">Employment</h4></div>
+      <div class="card-body">
+        <dl class="row info-pair mb-0">
+          <dt class="col-sm-4">Department</dt><dd class="col-sm-8">{{ employee.department.name if employee.department else "Unassigned" }}</dd>
+          <dt class="col-sm-4">Position</dt><dd class="col-sm-8">{{ employee.position.name if employee.position else "Unassigned" }}</dd>
+          <dt class="col-sm-4">Manager</dt><dd class="col-sm-8">{{ employee.manager.full_name if employee.manager else "Not assigned" }}</dd>
+          <dt class="col-sm-4">Employment Type</dt><dd class="col-sm-8">{{ employee.employment_type or "Not set" }}</dd>
+          <dt class="col-sm-4">Date Hired</dt><dd class="col-sm-8">{{ employee.date_hired }}</dd>
+          <dt class="col-sm-4">Company Email</dt><dd class="col-sm-8">{{ employee.company_email or "Not set" }}</dd>
+          <dt class="col-sm-4">Schedule</dt><dd class="col-sm-8">{{ active_shift.shift.shift_name ~ " (" ~ active_shift.shift.start_time.strftime('%I:%M %p') ~ " to " ~ active_shift.shift.end_time.strftime('%I:%M %p') ~ ")" if active_shift else "Default office shift (8:30 AM to 5:30 PM)" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h4 class="card-title mb-0">Personal Details</h4></div>
+      <div class="card-body">
+        <dl class="row info-pair mb-0">
+          <dt class="col-sm-4">Birthdate</dt><dd class="col-sm-8">{{ employee.birthdate or "Not set" }}</dd>
+          <dt class="col-sm-4">Gender</dt><dd class="col-sm-8">{{ employee.gender or "Not set" }}</dd>
+          <dt class="col-sm-4">Civil Status</dt><dd class="col-sm-8">{{ employee.civil_status or "Not set" }}</dd>
+          <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">{{ employee.contact_number or "Not set" }}</dd>
+          <dt class="col-sm-4">Address</dt><dd class="col-sm-8">{{ employee.address or "Not set" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h4 class="card-title mb-0">Attendance Today</h4></div>
+      <div class="card-body">
+        <div class="row g-3" id="employeeAttendanceSummary">
+          <div class="col-6">
+            <div class="text-muted small">Status</div>
+            <div class="mt-1"><span class="status-chip" id="employeeTodayStatus">{{ today_status|replace('_', ' ')|title }}</span></div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Date</div>
+            <div class="fw-semibold mt-1" id="employeeTodayDate">{{ today_attendance.date if today_attendance else "Today" }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Time In</div>
+            <div class="fw-semibold mt-1" id="employeeTodayTimeIn">{{ today_attendance.time_in.strftime('%Y-%m-%d %H:%M') if today_attendance and today_attendance.time_in else "No time in" }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Time Out</div>
+            <div class="fw-semibold mt-1" id="employeeTodayTimeOut">{{ today_attendance.time_out.strftime('%Y-%m-%d %H:%M') if today_attendance and today_attendance.time_out else "No time out" }}</div>
+          </div>
+          <div class="col-4">
+            <div class="text-muted small">Late</div>
+            <div class="fw-semibold mt-1" id="employeeTodayLate">{{ today_attendance.late_minutes if today_attendance else 0 }} min</div>
+          </div>
+          <div class="col-4">
+            <div class="text-muted small">Undertime</div>
+            <div class="fw-semibold mt-1" id="employeeTodayUndertime">{{ today_attendance.undertime_minutes if today_attendance else 0 }} min</div>
+          </div>
+          <div class="col-4">
+            <div class="text-muted small">OT</div>
+            <div class="fw-semibold mt-1" id="employeeTodayOt">{{ today_attendance.overtime_minutes if today_attendance else 0 }} min</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h4 class="card-title mb-0">Government IDs</h4></div>
+      <div class="card-body">
+        <dl class="row info-pair mb-0">
+          <dt class="col-sm-4">SSS</dt><dd class="col-sm-8">{{ employee.sss_no or "Not set" }}</dd>
+          <dt class="col-sm-4">TIN</dt><dd class="col-sm-8">{{ employee.tin_no or "Not set" }}</dd>
+          <dt class="col-sm-4">PhilHealth</dt><dd class="col-sm-8">{{ employee.philhealth_no or "Not set" }}</dd>
+          <dt class="col-sm-4">Pag-IBIG</dt><dd class="col-sm-8">{{ employee.pagibig_no or "Not set" }}</dd>
+          <dt class="col-sm-4">Badge ID</dt><dd class="col-sm-8">{{ employee.badge_id or "Not set" }}</dd>
+          <dt class="col-sm-4">NFC UID</dt><dd class="col-sm-8">{{ employee.nfc_uid or "Not set" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h4 class="card-title mb-0">Emergency Contact</h4></div>
+      <div class="card-body">
+        <dl class="row info-pair mb-0">
+          <dt class="col-sm-4">Name</dt><dd class="col-sm-8">{{ employee.emergency_contact_name or "Not set" }}</dd>
+          <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">{{ employee.emergency_contact_number or "Not set" }}</dd>
+          <dt class="col-sm-4">Profile Image</dt><dd class="col-sm-8">{{ employee.profile_image or "Not set" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card surface-card table-shell">
+      <div class="card-header"><h4 class="card-title mb-0">Recent Time Logs</h4></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Time In</th>
+                <th>Time Out</th>
+                <th>Status</th>
+                <th>Late</th>
+                <th>Undertime</th>
+                <th>OT</th>
+              </tr>
+            </thead>
+            <tbody id="employeeRecentAttendanceBody">
+              {% for record in recent_attendance %}
+              <tr data-record-id="{{ record.id }}">
+                <td>{{ record.date }}</td>
+                <td>{{ record.time_in.strftime('%Y-%m-%d %H:%M') if record.time_in else "No time in" }}</td>
+                <td>{{ record.time_out.strftime('%Y-%m-%d %H:%M') if record.time_out else "No time out" }}</td>
+                <td><span class="status-chip">{{ record.status|replace('_', ' ')|title }}</span></td>
+                <td>{{ record.late_minutes }} min</td>
+                <td>{{ record.undertime_minutes }} min</td>
+                <td>{{ record.overtime_minutes }} min</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="7" class="text-center py-5 text-muted">No time logs available yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  const detailEmployeeId = {{ employee.id }};
+  const detailSocket = io("/attendance-live");
+  const recentBodyEl = document.getElementById("employeeRecentAttendanceBody");
+
+  function formatDetailDateTime(value) {
+    if (!value) return "No time in";
+    return new Date(value).toLocaleString();
+  }
+
+  function statusLabel(value) {
+    return (value || "-").replaceAll("_", " ");
+  }
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  function upsertDetailRow(record) {
+    if (!recentBodyEl) return;
+    const emptyRow = recentBodyEl.querySelector("td[colspan='7']");
+    if (emptyRow) {
+      emptyRow.parentElement.remove();
+    }
+
+    let row = recentBodyEl.querySelector(`[data-record-id="${record.id}"]`);
+    if (!row) {
+      row = document.createElement("tr");
+      row.setAttribute("data-record-id", record.id);
+      row.innerHTML = `
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><span class="status-chip"></span></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      `;
+      recentBodyEl.prepend(row);
+    }
+
+    row.children[0].textContent = record.date || "Today";
+    row.children[1].textContent = record.time_in ? new Date(record.time_in).toLocaleString() : "No time in";
+    row.children[2].textContent = record.time_out ? new Date(record.time_out).toLocaleString() : "No time out";
+    row.children[3].querySelector(".status-chip").textContent = statusLabel(record.status);
+    row.children[4].textContent = `${record.late_minutes || 0} min`;
+    row.children[5].textContent = `${record.undertime_minutes || 0} min`;
+    row.children[6].textContent = `${record.overtime_minutes || 0} min`;
+  }
+
+  detailSocket.on("attendance_updated", (payload) => {
+    if (payload.employee_id !== detailEmployeeId) return;
+    const record = payload.record;
+    setText("employeeTodayStatus", statusLabel(record.status));
+    setText("employeeTodayDate", record.date || "Today");
+    setText("employeeTodayTimeIn", record.time_in ? new Date(record.time_in).toLocaleString() : "No time in");
+    setText("employeeTodayTimeOut", record.time_out ? new Date(record.time_out).toLocaleString() : "No time out");
+    setText("employeeTodayLate", `${record.late_minutes || 0} min`);
+    setText("employeeTodayUndertime", `${record.undertime_minutes || 0} min`);
+    setText("employeeTodayOt", `${record.overtime_minutes || 0} min`);
+    upsertDetailRow(record);
+  });
+</script>
+{% endblock %}

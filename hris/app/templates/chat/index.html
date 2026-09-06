@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Messages{% endblock %}
+{% block page_heading %}Messages{% endblock %}
+{% block page_subtitle %}Realtime employee-to-admin chat with a built-in AI assistant for quick HR support and follow-ups.{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-xl-4">
+    <div class="card surface-card chat-thread-card">
+      <div class="card-header"><h4 class="card-title mb-0">Conversations</h4></div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+          {% for thread in threads %}
+          {% set thread_name = 'HR Support' if current_user.role and current_user.role.name == 'Employee' else (thread.employee_user.display_name if thread.employee_user else 'Employee') %}
+          {% set thread_subtitle = 'Super Admin / HR Admin' if current_user.role and current_user.role.name == 'Employee' else (thread.employee_user.employee.employee_code if thread.employee_user and thread.employee_user.employee else 'Employee conversation') %}
+          <a
+            href="{{ url_for('chat.index', thread_id=thread.id) }}"
+            class="list-group-item list-group-item-action chat-thread-link {{ 'active' if active_thread and active_thread.id == thread.id else '' }}"
+          >
+            <div class="d-flex justify-content-between gap-3">
+              <div>
+                <div class="fw-semibold">{{ thread_name }}</div>
+                <div class="text-muted small">{{ thread_subtitle }}</div>
+              </div>
+              <small class="text-muted">{{ thread.updated_at.strftime('%m-%d %H:%M') if thread.updated_at else '' }}</small>
+            </div>
+          </a>
+          {% else %}
+          <div class="p-4 text-muted">No conversations yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-8">
+    <div class="card surface-card chat-shell">
+      <div class="card-header">
+        <h4 class="card-title mb-0">
+          {% if active_thread and active_thread.employee_user %}
+          Chat with {{ 'HR Support' if current_user.role and current_user.role.name == 'Employee' else active_thread.employee_user.display_name }}
+          {% else %}
+          Chat Window
+          {% endif %}
+        </h4>
+      </div>
+      <div class="card-body p-0">
+        {% if active_thread %}
+        <div class="chat-messages" id="chatMessages">
+          {% for message in messages %}
+          <div class="chat-bubble-row {{ 'mine' if message.sender_id == current_user.id else 'theirs' }}" data-message-id="{{ message.id }}">
+            <div class="chat-bubble">
+              <div class="chat-bubble-meta">
+                {{ message.sender.display_name if message.sender else 'User' }}
+                {% if message.sender and message.sender.username == 'ai_assistant' %}
+                <span class="ai-assistant-badge">AI Assistant</span>
+                {% endif %}
+                · {{ message.created_at.strftime('%Y-%m-%d %H:%M') }}
+              </div>
+              {% if message.body %}<div class="mb-2">{{ message.body }}</div>{% endif %}
+              {% if message.attachment_filename %}
+                {% if message.attachment_mime_type and message.attachment_mime_type.startswith('image/') %}
+                <a href="{{ url_for('static', filename='uploads/chat/' ~ message.attachment_filename) }}" target="_blank" class="chat-attachment-link">
+                  <img src="{{ url_for('static', filename='uploads/chat/' ~ message.attachment_filename) }}" alt="{{ message.attachment_original_name or 'Attachment' }}" class="chat-image-attachment">
+                </a>
+                {% else %}
+                <a href="{{ url_for('static', filename='uploads/chat/' ~ message.attachment_filename) }}" target="_blank" class="chat-attachment-link">
+                  <i class="bi bi-paperclip me-2"></i>{{ message.attachment_original_name or 'Attachment' }}
+                </a>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+          {% else %}
+          <div class="chat-empty-state" id="chatEmptyState">No messages yet. Start the conversation here.</div>
+          {% endfor %}
+        </div>
+        <div class="chat-composer">
+          <form id="chatComposerForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" id="chatThreadId" value="{{ active_thread.id }}">
+            <div class="chat-composer-tools mb-3">
+              <label class="btn btn-light-primary btn-sm mb-0" for="chatAttachmentInput"><i class="bi bi-image me-2"></i>Add image or file</label>
+              <input type="file" id="chatAttachmentInput" class="d-none">
+              <span class="text-muted small" id="chatAttachmentName">No attachment selected</span>
+            </div>
+            <div class="input-group input-group-lg">
+              <input type="text" class="form-control" id="chatMessageInput" placeholder="Type your message to HR or the employee" autocomplete="off">
+              <button class="btn btn-primary" type="submit"><i class="bi bi-send-fill me-2"></i>Send</button>
+            </div>
+          </form>
+        </div>
+        {% else %}
+        <div class="p-5 text-center text-muted">Select a conversation to open the realtime chat window.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+{% if active_thread %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  const chatSocket = io("/chat");
+  const chatThreadId = Number(document.getElementById("chatThreadId").value);
+  const chatMessagesEl = document.getElementById("chatMessages");
+  const chatInputEl = document.getElementById("chatMessageInput");
+  const chatFormEl = document.getElementById("chatComposerForm");
+  const chatAttachmentEl = document.getElementById("chatAttachmentInput");
+  const chatAttachmentNameEl = document.getElementById("chatAttachmentName");
+  const currentUserId = {{ current_user.id }};
+
+  function escapeHtml(value) {
+    return (value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
+  function appendChatMessage(message) {
+    const emptyEl = document.getElementById("chatEmptyState");
+    if (emptyEl) emptyEl.remove();
+
+    let row = chatMessagesEl.querySelector(`[data-message-id="${message.id}"]`);
+    if (!row) {
+      row = document.createElement("div");
+      row.className = `chat-bubble-row ${message.sender_id === currentUserId ? "mine" : "theirs"}`;
+      row.setAttribute("data-message-id", message.id);
+      row.innerHTML = `
+        <div class="chat-bubble">
+          <div class="chat-bubble-meta"></div>
+          <div class="chat-bubble-body"></div>
+        </div>
+      `;
+      chatMessagesEl.appendChild(row);
+    }
+
+    const aiBadge = message.is_ai_assistant ? ` <span class="ai-assistant-badge">AI Assistant</span>` : "";
+    row.querySelector(".chat-bubble-meta").innerHTML = `${escapeHtml(message.sender_name)}${aiBadge} · ${new Date(message.created_at).toLocaleString()}`;
+    let bodyHtml = message.body ? `<div class="mb-2">${escapeHtml(message.body)}</div>` : "";
+    if (message.attachment_url) {
+      if (message.attachment_is_image) {
+        bodyHtml += `<a href="${message.attachment_url}" target="_blank" class="chat-attachment-link"><img src="${message.attachment_url}" alt="${escapeHtml(message.attachment_name || 'Attachment')}" class="chat-image-attachment"></a>`;
+      } else {
+        bodyHtml += `<a href="${message.attachment_url}" target="_blank" class="chat-attachment-link"><i class="bi bi-paperclip me-2"></i>${escapeHtml(message.attachment_name || 'Attachment')}</a>`;
+      }
+    }
+    row.querySelector(".chat-bubble-body").innerHTML = bodyHtml;
+    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+  }
+
+  chatSocket.on("connect", () => {
+    chatSocket.emit("join_chat_thread", { thread_id: chatThreadId });
+  });
+
+  chatSocket.on("chat_message", (payload) => {
+    if (payload.thread_id === chatThreadId) {
+      appendChatMessage(payload.message);
+    }
+  });
+
+  chatSocket.on("chat_error", (payload) => {
+    Swal.fire({ icon: "error", title: "Chat error", text: payload.message });
+  });
+
+  chatSocket.on("chat_warning", (payload) => {
+    Swal.fire({ icon: "warning", title: "Language warning", text: payload.message });
+  });
+
+  chatAttachmentEl?.addEventListener("change", () => {
+    const file = chatAttachmentEl.files && chatAttachmentEl.files[0];
+    chatAttachmentNameEl.textContent = file ? file.name : "No attachment selected";
+  });
+
+  chatFormEl.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const body = chatInputEl.value.trim();
+    const file = chatAttachmentEl?.files && chatAttachmentEl.files[0];
+    if (!body && !file) return;
+
+    if (file) {
+      const formData = new FormData(chatFormEl);
+      formData.append("thread_id", String(chatThreadId));
+      formData.set("body", body);
+      formData.set("attachment", file);
+      fetch("{{ url_for('chat.send_attachment_message') }}", {
+        method: "POST",
+        body: formData
+      })
+        .then(async (response) => {
+          const contentType = response.headers.get("content-type") || "";
+          const payload = contentType.includes("application/json")
+            ? await response.json()
+            : { message: await response.text() };
+          if (!response.ok) {
+            throw new Error(payload.message || "Attachment send failed.");
+          }
+          if (payload.warning) {
+            Swal.fire({ icon: "warning", title: "Language warning", text: payload.warning });
+          }
+          chatInputEl.value = "";
+          chatAttachmentEl.value = "";
+          chatAttachmentNameEl.textContent = "No attachment selected";
+        })
+        .catch((error) => {
+          Swal.fire({ icon: "error", title: "Chat error", text: error.message });
+        });
+      return;
+    }
+
+    chatSocket.emit("chat_message", { thread_id: chatThreadId, body });
+    chatInputEl.value = "";
+  });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_title = "Leave Type" %}
+{% set page_subtitle_text = "Define the leave category and its default credit policy." %}
+{% set cancel_url = url_for('leave.index') %}
+{% set modal_intro = "Leave setup now uses the same modal pattern as the rest of the app." %}
+{% block modal_body %}
+<div class="form-section">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    {{ render_field(form.name) }}
+    {{ render_field(form.default_credits) }}
+    <div class="form-check mb-2">{{ form.is_paid(class="form-check-input") }} {{ form.is_paid.label(class="form-check-label") }}</div>
+    <div class="form-check mb-4">{{ form.requires_attachment(class="form-check-input") }} {{ form.requires_attachment.label(class="form-check-label") }}</div>
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-light-secondary" href="{{ cancel_url }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

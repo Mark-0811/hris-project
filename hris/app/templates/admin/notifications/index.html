@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block page_heading %}Notifications{% endblock %}
+{% block page_subtitle %}Review your recent HRIS alerts and company announcements.{% endblock %}
+{% block content %}
+<div class="card surface-card">
+  <div class="card-header"><h4 class="card-title mb-0">Notification Center</h4></div>
+  <div class="card-body">
+    {% for item in notifications %}
+    <div class="{{ '' if loop.first else 'pt-3 mt-3 border-top' }}">
+      <div class="d-flex justify-content-between align-items-start gap-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+            <h6 class="mb-0">{{ item.title }}</h6>
+            <span class="status-chip status-chip-info">{{ item.type.replace('_', ' ')|title }}</span>
+          </div>
+          <p class="text-muted mb-2">{{ item.message }}</p>
+          <div class="d-flex gap-2 flex-wrap">
+            {% if item.type == 'leave_request' %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('leave.index') }}">Review leave</a>
+            {% elif item.type == 'announcement' %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('admin.dashboard') }}">Open dashboard</a>
+            {% elif item.type == 'chat_report' %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('chat.index') }}">Open chat</a>
+            {% elif item.type == 'payroll' %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('reports.index') }}">Open payroll report</a>
+            {% elif item.type == 'profile_update_request' %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('admin.access_governance') }}">Review request</a>
+            {% elif item.type == 'profile_update_status' %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('auth.profile') }}">Open profile</a>
+            {% elif item.type == 'security_alert' %}
+            <a class="btn btn-sm btn-primary" href="{{ url_for('admin.api_requests') }}">Open API requests</a>
+            {% else %}
+            <a class="btn btn-sm btn-light-primary" href="{{ url_for('admin.dashboard') }}">View details</a>
+            {% endif %}
+          </div>
+        </div>
+        <small class="text-muted">{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+      </div>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No notifications yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

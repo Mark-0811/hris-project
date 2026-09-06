@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}Security Viewer{% endblock %}
+{% block page_heading %}Security Viewer{% endblock %}
+{% block page_subtitle %}Live monitoring, recognition events, and intruder management.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-xl-7">
+    <div class="card surface-card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Live Camera</h5>
+        <small class="text-muted">USB Stream</small>
+      </div>
+      <div class="card-body">
+        <img src="{{ url_for('security.stream') }}" alt="Security Live Stream" class="img-fluid rounded border w-100">
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-5">
+    <div class="card surface-card mb-4">
+      <div class="card-header"><h5 class="mb-0">Enroll Known Person</h5></div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('security.enroll_from_form') }}" enctype="multipart/form-data" class="row g-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="col-12">
+            <label class="form-label">Name</label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Notes</label>
+            <textarea name="notes" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Profile Image</label>
+            <input type="file" name="image" class="form-control" accept="image/*" required>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary" type="submit">Enroll Profile</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card surface-card">
+      <div class="card-header"><h5 class="mb-0">Active Intruders</h5></div>
+      <div class="card-body">
+        {% for item in intruders %}
+        <div class="d-flex justify-content-between align-items-start {{ '' if loop.first else 'pt-3 mt-3 border-top' }}">
+          <div>
+            <h6 class="mb-1">{{ item.label }}</h6>
+            <p class="text-muted mb-0">{{ item.notes or 'No notes provided.' }}</p>
+          </div>
+          <small class="text-muted">{{ item.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No active intruder profiles.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card surface-card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Detection Events</h5>
+        <span class="text-muted small">Most recent first</span>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table datatable" id="security-events-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Image</th>
+                <th>Result</th>
+                <th>Confidence</th>
+                <th>Camera</th>
+                <th>Matched</th>
+                <th>Rule</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in events %}
+              <tr data-event-id="{{ event.id }}" data-result-class="{{ event.result_class }}">
+                <td>{{ event.detected_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td><a href="{{ event.image_url }}" target="_blank">View image</a></td>
+                <td>
+                  <span class="badge bg-{{ event.result_class|security_badge_class }}">
+                    {{ event.result_class.replace('_', ' ')|title }}
+                  </span>
+                </td>
+                <td>{{ '%.3f'|format(event.confidence or 0) }}</td>
+                <td>{{ event.source_camera }}</td>
+                <td>{{ event.matched_profile.name if event.matched_profile else 'N/A' }}</td>
+                <td>{{ event.rule_trace }}</td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-danger js-mark-intruder" type="button">Mark Intruder</button>
+                    <button class="btn btn-sm btn-success js-unmark-intruder" type="button">Unmark</button>
+                  </div>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="8" class="text-center text-muted">No detections yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card surface-card">
+      <div class="card-header"><h5 class="mb-0">Known Profiles</h5></div>
+      <div class="card-body">
+        <div class="row g-3">
+          {% for profile in profiles %}
+          <div class="col-12 col-md-6 col-xl-4">
+            <div class="border rounded p-3 h-100">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0">{{ profile.name }}</h6>
+                <span class="badge bg-{{ 'danger' if profile.status == 'intruder' else 'primary' }}">{{ profile.status }}</span>
+              </div>
+              {% if profile.image_url %}
+              <img src="{{ profile.image_url }}" alt="{{ profile.name }}" class="img-fluid rounded mb-2">
+              {% endif %}
+              <p class="text-muted mb-0">{{ profile.notes or 'No notes.' }}</p>
+            </div>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">No profiles enrolled yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function updateIntruder(eventId, action, payload = {}) {
+    const response = await fetch(`/api/security/events/${eventId}/${action}`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || "Request failed");
+    }
+    return response.json();
+  }
+
+  document.addEventListener("click", async (event) => {
+    const markBtn = event.target.closest(".js-mark-intruder");
+    const unmarkBtn = event.target.closest(".js-unmark-intruder");
+    if (!markBtn && !unmarkBtn) return;
+
+    const row = event.target.closest("tr[data-event-id]");
+    if (!row) return;
+    const eventId = row.dataset.eventId;
+
+    try {
+      if (markBtn) {
+        const label = window.prompt("Intruder label (optional):", "") || "";
+        const notes = window.prompt("Notes (optional):", "") || "";
+        await updateIntruder(eventId, "mark-intruder", {label, notes});
+      } else {
+        await updateIntruder(eventId, "unmark-intruder");
+      }
+      window.location.reload();
+    } catch (error) {
+      Swal.fire({icon: "error", title: "Action failed", text: String(error)});
+    }
+  });
+</script>
+{% endblock %}

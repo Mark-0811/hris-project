@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Integration Management{% endblock %}
+{% block page_heading %}Integration Management{% endblock %}
+{% block page_subtitle %}Configure providers and webhook subscriptions used by HRIS workflows.{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h5 class="mb-0">Create Integration</h5></div>
+      <div class="card-body">
+        <form method="post" class="row g-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="create_integration">
+          <div class="col-12"><input class="form-control" name="name" placeholder="Integration name" required></div>
+          <div class="col-12"><input class="form-control" name="provider" placeholder="Provider (e.g., Twilio, SendGrid)" required></div>
+          <div class="col-12"><input class="form-control" name="base_url" placeholder="Base URL"></div>
+          <div class="col-12"><button type="submit" class="btn btn-primary">Create Integration</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h5 class="mb-0">Create Webhook</h5></div>
+      <div class="card-body">
+        <form method="post" class="row g-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="create_webhook">
+          <div class="col-12">
+            <select class="form-select" name="integration_id" required>
+              <option value="">Integration</option>
+              {% for i in integrations %}
+              <option value="{{ i.id }}">{{ i.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12"><input class="form-control" name="event_name" placeholder="Event name (e.g., leave.approved)" required></div>
+          <div class="col-12"><input class="form-control" name="endpoint_url" placeholder="Webhook endpoint URL" required></div>
+          <div class="col-12"><button type="submit" class="btn btn-primary">Create Webhook</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card">
+      <div class="card-header"><h5 class="mb-0">Integrations</h5></div>
+      <div class="card-body table-responsive">
+        <table class="table datatable align-middle">
+          <thead><tr><th>Name</th><th>Provider</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for i in integrations %}
+            <tr>
+              <td>{{ i.name }}</td>
+              <td>{{ i.provider }}</td>
+              <td>{{ i.status|title }}</td>
+              <td>
+                <form method="post">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="action" value="toggle_integration">
+                  <input type="hidden" name="integration_id" value="{{ i.id }}">
+                  <button type="submit" class="btn btn-sm btn-outline-primary">Toggle</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted">No integrations yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card">
+      <div class="card-header"><h5 class="mb-0">Webhooks</h5></div>
+      <div class="card-body table-responsive">
+        <table class="table datatable align-middle">
+          <thead><tr><th>Integration ID</th><th>Event</th><th>Active</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for w in webhooks %}
+            <tr>
+              <td>{{ w.integration_id }}</td>
+              <td>{{ w.event_name }}</td>
+              <td>{{ 'Yes' if w.is_active else 'No' }}</td>
+              <td>
+                <form method="post">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="action" value="toggle_webhook">
+                  <input type="hidden" name="webhook_id" value="{{ w.id }}">
+                  <button type="submit" class="btn btn-sm btn-outline-primary">Toggle</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted">No webhooks yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

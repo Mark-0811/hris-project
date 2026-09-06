@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Surveys{% endblock %}
+{% block page_heading %}Surveys{% endblock %}
+{% block page_subtitle %}Participate in pulse surveys, share suggestions, and stay close to company updates.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-xl-7">
+    <div class="card h-100">
+      <div class="card-header"><h4 class="card-title">Pulse surveys</h4></div>
+      <div class="card-body">
+        {% for item in surveys_data.surveys %}
+        <div class="experience-request-card">
+          <div class="d-flex justify-content-between gap-2 flex-wrap">
+            <div><h5 class="mb-1">{{ item.survey.title }}</h5><p class="text-muted mb-2">Status: {{ item.survey.status|title }}</p></div>
+            {% if item.answered %}<span class="badge bg-light-success">Answered</span>{% endif %}
+          </div>
+          {% if item.questions %}
+          <ul class="mb-3">{% for question in item.questions %}<li>{{ question }}</li>{% endfor %}</ul>
+          {% endif %}
+          <form method="post" action="{{ url_for('experience.respond_survey', survey_id=item.survey.id) }}">
+            {{ response_form.hidden_tag() }}
+            <input type="hidden" name="{{ response_form.survey_id.name }}" value="{{ item.survey.id }}">
+            <div class="row g-3">
+              <div class="col-md-4">{{ response_form.sentiment_score.label(class="form-label") }}{{ response_form.sentiment_score(class="form-control", placeholder="1 to 5") }}</div>
+              <div class="col-md-8">{{ response_form.feedback.label(class="form-label") }}{{ response_form.feedback(class="form-control", rows="2", placeholder="What should we keep or improve?") }}</div>
+            </div>
+            <div class="mt-3"><button class="btn btn-light-primary" type="submit">Send response</button></div>
+          </form>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No open pulse surveys right now.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="card mb-4">
+      <div class="card-header"><h4 class="card-title">Suggestion box</h4></div>
+      <div class="card-body">
+        <form method="post">
+          {{ suggestion_form.hidden_tag() }}
+          <div class="mb-3">{{ suggestion_form.message.label(class="form-label") }}{{ suggestion_form.message(class="form-control", rows="4", placeholder="Share a process improvement, concern, or idea.") }}</div>
+          <div class="form-check form-switch mb-3">{{ suggestion_form.is_anonymous(class="form-check-input") }}{{ suggestion_form.is_anonymous.label(class="form-check-label") }}</div>
+          {{ suggestion_form.submit(class="btn btn-light-primary w-100") }}
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h4 class="card-title">Company feed</h4></div>
+      <div class="card-body">
+        {% for item in surveys_data.announcements %}
+        <div class="experience-mini-feed-item">
+          <h6 class="mb-1">{{ item.title }}</h6>
+          <p class="mb-0 text-muted">{{ item.body|striptags }}</p>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No company updates posted yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

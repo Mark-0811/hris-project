@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Help Center{% endblock %}
+{% block page_heading %}Help Center{% endblock %}
+{% block page_subtitle %}Find quick guidance, FAQs, and the requests already being handled for you.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header"><h4 class="card-title">Guides and FAQs</h4></div>
+      <div class="card-body">
+        {% for item in help_center.articles %}
+        <div class="experience-article-card">
+          <span class="badge bg-light-primary mb-2">{{ item.module|title }}</span>
+          <h5>{{ item.title }}</h5>
+          <p class="mb-0 text-muted">{{ item.content }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-header"><h4 class="card-title">Open support requests</h4></div>
+      <div class="card-body">
+        {% for item in help_center.open_tickets %}
+        <div class="experience-list-row">
+          <div><strong>{{ item.subject }}</strong><div class="text-muted">{{ item.category.replace('_', ' ')|title }}</div></div>
+          <span class="badge bg-light-secondary">{{ item.status.replace('_', ' ')|title }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">You do not have open support requests right now.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

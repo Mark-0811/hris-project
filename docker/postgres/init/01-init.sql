@@ -1,0 +1,2 @@
+-- HRIS PostgreSQL initialization script.
+-- Keep this file for future DB defaults/extensions.

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Payroll{% endblock %}
+{% block page_heading %}Payroll{% endblock %}
+{% block page_subtitle %}Manage cutoffs, compensation setup, recurring components, and generated payroll entries.{% endblock %}
+{% block page_actions %}
+<a class="btn btn-primary" data-modal-link="true" href="{{ url_for('payroll.create_cutoff') }}">New Cutoff</a>
+<a class="btn btn-light-primary" data-modal-link="true" href="{{ url_for('payroll.create_salary') }}">Salary Setup</a>
+<a class="btn btn-light-primary" data-modal-link="true" href="{{ url_for('payroll.generate') }}">Generate Payroll</a>
+<a class="btn btn-light-primary" data-modal-link="true" href="{{ url_for('payroll.post_payroll') }}">Post Payroll</a>
+{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+  <div class="col-md-3"><div class="card metric-card metric-card-primary"><div class="card-body"><p class="text-white-50">Cutoffs</p><h2 class="text-white">{{ summary.cutoffs }}</h2></div></div></div>
+  <div class="col-md-3"><div class="card metric-card metric-card-warning"><div class="card-body"><p class="text-white-50">Open Cutoffs</p><h2 class="text-white">{{ summary.open_cutoffs }}</h2></div></div></div>
+  <div class="col-md-3"><div class="card metric-card metric-card-success"><div class="card-body"><p class="text-white-50">Payroll Entries</p><h2 class="text-white">{{ summary.entries }}</h2></div></div></div>
+  <div class="col-md-3"><div class="card metric-card metric-card-info"><div class="card-body"><p class="text-white-50">Salary Setups</p><h2 class="text-white">{{ summary.employees_with_salary }}</h2></div></div></div>
+</div>
+<div class="card surface-card mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
+      <div>
+        <h5 class="mb-1">Payroll flow</h5>
+        <p class="text-muted mb-0">1. Create cutoff  2. Add salary setup  3. Generate payroll  4. Post payroll  5. Employees download PDF payslips.</p>
+      </div>
+      {% if not cutoffs %}
+      <span class="status-chip status-chip-warning">Create a cutoff first</span>
+      {% elif not salaries %}
+      <span class="status-chip status-chip-warning">Add salary setup before generating</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-12 col-xl-7">
+    <div class="card surface-card table-shell">
+      <div class="card-header"><h4 class="card-title mb-0">Payroll Entries</h4></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle datatable">
+            <thead><tr><th>Employee</th><th>Cutoff</th><th>Status</th><th>Net Pay</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+              {% for entry in entries %}
+              <tr>
+                <td>{{ entry.employee.full_name if entry.employee else "Unknown" }}</td>
+                <td>{{ entry.cutoff.cutoff_name if entry.cutoff else "Unknown" }}</td>
+                <td><span class="status-chip">{{ entry.status|title }}</span></td>
+                <td>{{ entry.net_pay }}</td>
+                <td class="text-end"><a class="btn btn-sm btn-light-primary" href="{{ url_for('payroll.download_entry_pdf', entry_id=entry.id) }}">PDF</a></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center py-5 text-muted">No payroll entries yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-5">
+    <div class="card surface-card mb-4">
+      <div class="card-header"><h4 class="card-title mb-0">Cutoffs</h4></div>
+      <div class="card-body">
+        {% for cutoff in cutoffs %}
+        <div class="mb-3"><strong>{{ cutoff.cutoff_name }}</strong><div class="text-muted small">{{ cutoff.start_date }} to {{ cutoff.end_date }} · {{ cutoff.status }}</div></div>
+        {% else %}<p class="text-muted mb-0">No cutoffs defined.</p>{% endfor %}
+      </div>
+    </div>
+    <div class="card surface-card">
+      <div class="card-header"><h4 class="card-title mb-0">Recurring Components</h4></div>
+      <div class="card-body">
+        <p class="mb-2"><strong>Allowances:</strong> {{ allowances|length }}</p>
+        <p class="mb-0"><strong>Deductions:</strong> {{ deductions|length }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

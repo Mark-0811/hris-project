@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Schedules{% endblock %}
+{% block page_heading %}Schedules{% endblock %}
+{% block page_subtitle %}Create and maintain working schedules beyond the default office shift.{% endblock %}
+{% block page_actions %}
+<a class="btn btn-primary" data-modal-link="true" href="{{ url_for('employees.create_schedule') }}"><i class="bi bi-plus-lg me-2"></i>Add Schedule</a>
+{% endblock %}
+{% block content %}
+<div class="card surface-card table-shell">
+  <div class="card-header">
+    <h4 class="card-title mb-0">Schedule Directory</h4>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle datatable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Grace</th>
+            <th>Type</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for schedule in schedules %}
+          <tr>
+            <td class="fw-semibold">{{ schedule.shift_name }}</td>
+            <td>{{ schedule.start_time.strftime('%I:%M %p') }}</td>
+            <td>{{ schedule.end_time.strftime('%I:%M %p') }}</td>
+            <td>{{ schedule.grace_period_minutes }} min</td>
+            <td><span class="status-chip">{{ "Flexible" if schedule.is_flexible else "Fixed" }}</span></td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-light-secondary" data-modal-link="true" href="{{ url_for('employees.edit_schedule', shift_id=schedule.id) }}">Edit</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">No schedules have been added yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Compliance Records{% endblock %}
+{% block page_heading %}Compliance Records{% endblock %}
+{% block page_subtitle %}Manage consent logs and privacy requests in one operational queue.{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h5 class="mb-0">Create Consent Log</h5></div>
+      <div class="card-body">
+        <form method="post" class="row g-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="create_consent">
+          <div class="col-12">
+            <select class="form-select" name="employee_id" required>
+              <option value="">Employee</option>
+              {% for e in employees %}
+              <option value="{{ e.id }}">{{ e.employee_code }} - {{ e.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <input class="form-control" name="consent_type" placeholder="Consent type (e.g., biometric_processing)" required>
+          </div>
+          <div class="col-12">
+            <textarea class="form-control" rows="2" name="notes" placeholder="Notes"></textarea>
+          </div>
+          <div class="col-12"><button type="submit" class="btn btn-primary">Save Consent</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h5 class="mb-0">Create Privacy Request</h5></div>
+      <div class="card-body">
+        <form method="post" class="row g-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="create_privacy">
+          <div class="col-12">
+            <select class="form-select" name="employee_id" required>
+              <option value="">Employee</option>
+              {% for e in employees %}
+              <option value="{{ e.id }}">{{ e.employee_code }} - {{ e.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <input class="form-control" name="request_type" placeholder="Request type (access/export/delete)" required>
+          </div>
+          <div class="col-12">
+            <textarea class="form-control" rows="2" name="details" placeholder="Request details"></textarea>
+          </div>
+          <div class="col-12"><button type="submit" class="btn btn-primary">Submit Request</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card">
+      <div class="card-header"><h5 class="mb-0">Consent Logs</h5></div>
+      <div class="card-body table-responsive">
+        <table class="table datatable">
+          <thead><tr><th>Employee</th><th>Type</th><th>Consented At</th><th>Notes</th></tr></thead>
+          <tbody>
+            {% for item in consent_logs %}
+            <tr><td>{{ item.employee_id }}</td><td>{{ item.consent_type }}</td><td>{{ item.consented_at }}</td><td>{{ item.notes or '-' }}</td></tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted">No consent logs yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card">
+      <div class="card-header"><h5 class="mb-0">Privacy Requests</h5></div>
+      <div class="card-body table-responsive">
+        <table class="table datatable align-middle">
+          <thead><tr><th>Employee</th><th>Type</th><th>Status</th><th>Update</th></tr></thead>
+          <tbody>
+            {% for item in privacy_requests %}
+            <tr>
+              <td>{{ item.employee_id }}</td>
+              <td>{{ item.request_type }}</td>
+              <td>{{ item.status|title }}</td>
+              <td>
+                <form method="post" class="d-flex gap-2">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="action" value="update_privacy">
+                  <input type="hidden" name="request_id" value="{{ item.id }}">
+                  <select class="form-select form-select-sm" name="status">
+                    <option value="open" {{ 'selected' if item.status == 'open' else '' }}>Open</option>
+                    <option value="in_progress" {{ 'selected' if item.status == 'in_progress' else '' }}>In Progress</option>
+                    <option value="resolved" {{ 'selected' if item.status == 'resolved' else '' }}>Resolved</option>
+                    <option value="closed" {{ 'selected' if item.status == 'closed' else '' }}>Closed</option>
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted">No privacy requests yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

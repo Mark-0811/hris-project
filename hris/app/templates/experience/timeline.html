@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}My Timeline{% endblock %}
+{% block page_heading %}My Timeline{% endblock %}
+{% block page_subtitle %}A single view of attendance, leave, profile changes, support requests, and milestones.{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    {% for item in timeline.entries %}
+    <div class="experience-timeline-row">
+      <div class="experience-timeline-date">{{ item.date }}</div>
+      <div class="experience-timeline-content">
+        <span class="badge bg-light-primary mb-2">{{ item.kind|title }}</span>
+        <h5 class="mb-1">{{ item.title }}</h5>
+        <p class="text-muted mb-0">{{ item.detail }}</p>
+      </div>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No timeline entries yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

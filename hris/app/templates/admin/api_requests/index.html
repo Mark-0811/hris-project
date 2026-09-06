@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}API Requests{% endblock %}
+{% block page_heading %}API Requests{% endblock %}
+{% block page_subtitle %}Super Admin reference for all available HRIS API endpoints and access requirements.{% endblock %}
+{% block content %}
+<div class="row g-4">
+  {% for group in endpoint_groups %}
+  <div class="col-12">
+    <div class="card surface-card">
+      <div class="card-header">
+        <h4 class="card-title mb-1">{{ group.group }}</h4>
+        <p class="text-muted mb-0">{{ group.description }}</p>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Auth</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for endpoint in group.endpoints %}
+              <tr>
+                <td><span class="badge bg-light-primary text-primary">{{ endpoint.method }}</span></td>
+                <td><code>{{ endpoint.path }}</code></td>
+                <td>{{ endpoint.auth }}</td>
+                <td>{{ endpoint.purpose }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

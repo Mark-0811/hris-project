@@ -1,0 +1,69 @@
+{% extends "modal_fragment_base.html" if request.headers.get('X-HRIS-Modal') == '1' else "modal_form_base.html" %}
+{% from "_form_helpers.html" import render_field %}
+{% set page_subtitle_text = "Configure account identity, access level, and employee linkage." %}
+{% set cancel_url = url_for('admin.users') %}
+{% set modal_intro = "Use this dialog to manage user access without leaving the list view." %}
+{% block modal_body %}
+<div class="row g-4">
+  <div class="col-12 col-xl-8">
+      <h5>Account Details</h5>
+      <form method="post" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.username) }}</div>
+          <div class="col-md-6">{{ render_field(form.email) }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.role_id) }}</div>
+          <div class="col-md-6">{{ render_field(form.employee_id) }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ render_field(form.password) }}</div>
+          <div class="col-md-6">{{ render_field(form.photo) }}</div>
+        </div>
+        {% if can_manage_api_access %}
+        <div class="form-check mb-2">
+          {{ form.can_access_api(class="form-check-input") }}
+          {{ form.can_access_api.label(class="form-check-label") }}
+          <div class="form-text">Enable this if the user should authenticate requests with their personal API token.</div>
+        </div>
+        {% elif user and user.can_access_api %}
+        <div class="mb-3">
+          <label class="form-label">API access</label>
+          <input type="text" class="form-control" value="Enabled by Super Admin" readonly>
+        </div>
+        {% endif %}
+        {% if user and user.photo_url %}
+        <div class="mb-3">
+          <label class="form-label">Current photo</label>
+          <div><img src="{{ user.photo_url }}" alt="{{ user.username }}" class="rounded-3 border" style="width: 88px; height: 88px; object-fit: cover;"></div>
+        </div>
+        {% endif %}
+        {% if user and user.api_token %}
+        <div class="mb-3">
+          <label class="form-label">Biometric API token</label>
+          <input type="text" class="form-control" value="{{ user.api_token }}" readonly>
+          <div class="form-text">Use this token in the `X-API-Token` header for biometric integrations.</div>
+        </div>
+        {% endif %}
+        <div class="form-check mb-2">
+          {{ form.is_active(class="form-check-input") }}
+          {{ form.is_active.label(class="form-check-label") }}
+        </div>
+        <div class="form-check mb-4">
+          {{ form.force_password_change(class="form-check-input") }}
+          {{ form.force_password_change.label(class="form-check-label") }}
+        </div>
+        <div class="d-flex gap-2">
+          {{ form.submit(class="btn btn-primary") }}
+          <a class="btn btn-light-secondary" href="{{ cancel_url }}" data-modal-close="true">Cancel</a>
+        </div>
+      </form>
+  </div>
+  <div class="col-12 col-xl-4">
+    <h5>Guidance</h5>
+    <p class="text-muted">Use HR-admin or super-admin roles for master-data access. If you choose `Biometrics API User`, HRIS will enable API access automatically and generate a dedicated API token.</p>
+    <div class="status-chip"><i class="bi bi-shield-check"></i> Role-based access ready</div>
+  </div>
+</div>
+{% endblock %}

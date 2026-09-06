@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% block title %}Access Governance{% endblock %}
+{% block page_heading %}Access Governance{% endblock %}
+{% block page_subtitle %}Manage templates, access requests, bulk assignments, audits, and dormant access patterns.{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h4 class="card-title mb-0">Saved Templates</h4></div>
+      <div class="card-body">
+        <form method="post" class="mb-4">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="access_action" value="create_template">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Template name</label>
+              <input class="form-control" name="template_name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Role hint</label>
+              <select class="form-select" name="template_role_name">
+                <option value="">Any role</option>
+                {% for role in roles %}
+                <option value="{{ role.name }}">{{ role.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <input class="form-control" name="template_description">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Menu links</label>
+              <div class="row g-2">
+                {% for section in menu_sections %}
+                  {% for group in section["items"] %}
+                    {% for item in group["items"] %}
+                    <div class="col-md-6">
+                      <label class="d-flex align-items-center gap-2 p-2 rounded-3 border">
+                        <input class="form-check-input" type="checkbox" name="template_menu_keys" value="{{ item.key }}">
+                        <span>{{ item.label }}</span>
+                      </label>
+                    </div>
+                    {% endfor %}
+                  {% endfor %}
+                {% endfor %}
+              </div>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary" type="submit">Save Template</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr><th>Name</th><th>Role</th><th>Links</th></tr>
+            </thead>
+            <tbody>
+              {% for template in templates %}
+              <tr>
+                <td class="fw-semibold">{{ template.name }}</td>
+                <td>{{ template.role_name or "Any" }}</td>
+                <td>{{ template_menu_keys(template)|join(", ") }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="text-muted text-center py-4">No templates yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h4 class="card-title mb-0">Apply Access</h4></div>
+      <div class="card-body">
+        <form method="post" class="mb-4">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="access_action" value="apply_template">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Template</label>
+              <select class="form-select" name="template_id" required>
+                <option value="">Select template</option>
+                {% for template in templates %}
+                <option value="{{ template.id }}">{{ template.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Target user</label>
+              <select class="form-select" name="target_user_id" required>
+                <option value="">Select user</option>
+                {% for user in users %}
+                <option value="{{ user.id }}">{{ user.username }}{% if user.role %} · {{ user.role.name }}{% endif %}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Temporary access (days)</label>
+              <input class="form-control" name="expires_in_days" type="number" min="0" placeholder="Leave blank for permanent">
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary" type="submit">Apply To User</button>
+            </div>
+          </div>
+        </form>
+
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="access_action" value="bulk_apply">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Template</label>
+              <select class="form-select" name="bulk_template_id">
+                <option value="">No template</option>
+                {% for template in templates %}
+                <option value="{{ template.id }}">{{ template.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Or clone from user</label>
+              <select class="form-select" name="source_user_id">
+                <option value="">No source user</option>
+                {% for user in users %}
+                <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Target role</label>
+              <select class="form-select" name="bulk_role_name">
+                <option value="">All roles</option>
+                {% for role in roles %}
+                <option value="{{ role.name }}">{{ role.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-light-primary" type="submit">Run Bulk Apply</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card surface-card">
+      <div class="card-header"><h4 class="card-title mb-0">Access Requests</h4></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr><th>User</th><th>Requested Links</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {% for item in access_requests %}
+              <tr>
+                <td>{{ item.user_id }}</td>
+                <td>{{ request_menu_keys(item)|join(", ") }}</td>
+                <td>{{ item.reason or "No note provided" }}</td>
+                <td><span class="badge bg-light-info text-info">{{ item.status|title }}</span></td>
+                <td>
+                  {% if item.status == 'pending' %}
+                  <form method="post" action="{{ url_for('admin.approve_access_request', request_id=item.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="decision" value="approve">
+                    <button class="btn btn-sm btn-light-success" type="submit">Approve</button>
+                  </form>
+                  <form method="post" action="{{ url_for('admin.approve_access_request', request_id=item.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="decision" value="reject">
+                    <button class="btn btn-sm btn-light-danger" type="submit">Reject</button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-muted text-center py-4">No access requests yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card surface-card">
+      <div class="card-header"><h4 class="card-title mb-0">Profile Update Verification</h4></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr><th>User</th><th>Requested Changes</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {% for item in profile_update_requests %}
+              <tr>
+                <td>{{ item.user.display_name if item.user else item.user_id }}</td>
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                    {% for change in profile_request_changes(item) %}
+                    <div><span class="fw-semibold">{{ change.label }}</span>: {{ change.current_value }} <i class="bi bi-arrow-right"></i> {{ change.requested_value }}</div>
+                    {% else %}
+                    <span class="text-muted">No field changes detected.</span>
+                    {% endfor %}
+                  </div>
+                </td>
+                <td>{{ item.reason or "No note provided" }}</td>
+                <td><span class="badge bg-light-info text-info">{{ item.status|title }}</span></td>
+                <td>
+                  {% if item.status == 'pending' %}
+                  <form method="post" action="{{ url_for('admin.review_profile_request', request_id=item.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="decision" value="approve">
+                    <button class="btn btn-sm btn-light-success" type="submit">Approve</button>
+                  </form>
+                  <form method="post" action="{{ url_for('admin.review_profile_request', request_id=item.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="decision" value="reject">
+                    <button class="btn btn-sm btn-light-danger" type="submit">Reject</button>
+                  </form>
+                  {% else %}
+                  <span class="text-muted small">{{ item.decision_notes or "Reviewed" }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-muted text-center py-4">No profile update requests yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h4 class="card-title mb-0">Dormant Access</h4></div>
+      <div class="card-body">
+        <div class="table-responsive access-scroll-table">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr><th>User</th><th>Menu</th><th>Last Seen</th><th>Expires</th></tr>
+            </thead>
+            <tbody>
+              {% for row in dormant_rows %}
+              <tr>
+                <td>{{ row.user.username if row.user else row.user_id }}</td>
+                <td>{{ row.menu_key }}</td>
+                <td>{{ row.last_seen_at or "Never" }}</td>
+                <td>{{ row.expires_at or "No expiry" }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-muted text-center py-4">No dormant menu access found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header"><h4 class="card-title mb-0">Audit Trail</h4></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr><th>When</th><th>Action</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              {% for log in audit_logs %}
+              <tr>
+                <td>{{ log.created_at }}</td>
+                <td>{{ log.action }}</td>
+                <td>{{ log.description }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="text-muted text-center py-4">No access audit logs yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

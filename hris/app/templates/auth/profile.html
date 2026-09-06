@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block page_heading %}My Profile{% endblock %}
+{% block page_subtitle %}View your account and employee information.{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-xl-4">
+    <div class="card surface-card h-100">
+      <div class="card-body text-center">
+        <div class="avatar avatar-xl mx-auto mb-3 hris-user-avatar">
+          {% if current_user.photo_url %}
+          <img src="{{ current_user.photo_url }}" alt="{{ current_user.display_name }}">
+          {% else %}
+          <span>{{ (current_user.display_name or 'U')[0]|upper }}</span>
+          {% endif %}
+        </div>
+        <h4 class="mb-1">{{ current_user.display_name }}</h4>
+        <p class="text-muted mb-3">{{ current_user.role.name if current_user.role else "User" }}</p>
+        <div class="status-chip justify-content-center d-inline-flex">
+          <i class="bi bi-shield-check"></i>
+          {{ "Active" if current_user.is_active else "Inactive" }} Account
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-8">
+    <div class="card surface-card h-100">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Account Information</h4>
+      </div>
+      <div class="card-body">
+        <dl class="row info-pair mb-0">
+          <dt class="col-sm-4">Username</dt><dd class="col-sm-8">{{ current_user.username }}</dd>
+          <dt class="col-sm-4">Email</dt><dd class="col-sm-8">{{ current_user.email }}</dd>
+          <dt class="col-sm-4">Role</dt><dd class="col-sm-8">{{ current_user.role.name if current_user.role else "Unassigned" }}</dd>
+          <dt class="col-sm-4">Last Login</dt><dd class="col-sm-8">{{ current_user.last_login or "No login history yet" }}</dd>
+          <dt class="col-sm-4">API Access</dt><dd class="col-sm-8">{{ "Enabled" if current_user.can_access_api else "Disabled" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card surface-card">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Access Summary</h4>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-4"><div class="status-chip d-inline-flex"><i class="bi bi-grid"></i>{{ access_summary.assigned_count }} active links</div></div>
+          <div class="col-md-4"><div class="status-chip d-inline-flex"><i class="bi bi-stars"></i>{{ access_summary.custom_only|length }} custom links</div></div>
+          <div class="col-md-4"><div class="status-chip d-inline-flex"><i class="bi bi-arrow-counterclockwise"></i>{{ access_summary.missing_recommended|length }} role defaults removed</div></div>
+        </div>
+        <p class="text-muted mb-2">Assigned links</p>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          {% for key in access_summary.assigned_keys %}
+          <span class="badge bg-light-primary text-primary">{{ key }}</span>
+          {% else %}
+          <span class="text-muted">No menu access assigned.</span>
+          {% endfor %}
+        </div>
+        {% if access_requests %}
+        <p class="text-muted mb-2">Recent access requests</p>
+        <div class="d-flex flex-column gap-2">
+          {% for item in access_requests %}
+          <div class="p-2 rounded-3 border">
+            <div class="fw-semibold">{{ item.status|title }}</div>
+            <div class="text-muted small">{{ item.reason or "No note provided" }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if current_user.employee %}
+  <div class="col-12">
+    <div class="card surface-card">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h4 class="card-title mb-1">Self-Service Profile Update</h4>
+          <p class="text-muted mb-0">Submit safe personal detail changes for HR verification before they are applied.</p>
+        </div>
+        {% if pending_profile_request %}
+        <span class="status-chip status-chip-warning">
+          <i class="bi bi-hourglass-split"></i>
+          Pending review
+        </span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="row g-4">
+          <div class="col-12 col-xl-7">
+            <form method="post" class="row g-3">
+              {{ profile_update_form.hidden_tag() }}
+              <div class="col-md-6">
+                <label class="form-label">{{ profile_update_form.birthdate.label.text }}</label>
+                {{ profile_update_form.birthdate(class="form-control") }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ profile_update_form.gender.label.text }}</label>
+                {{ profile_update_form.gender(class="form-select") }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ profile_update_form.civil_status.label.text }}</label>
+                {{ profile_update_form.civil_status(class="form-select") }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ profile_update_form.emergency_contact_name.label.text }}</label>
+                {{ profile_update_form.emergency_contact_name(class="form-control", placeholder="Contact person") }}
+              </div>
+              <div class="col-12">
+                <label class="form-label">{{ profile_update_form.address.label.text }}</label>
+                {{ profile_update_form.address(class="form-control", rows="3", placeholder="Current home address") }}
+              </div>
+              <div class="col-12">
+                <label class="form-label">{{ profile_update_form.reason.label.text }}</label>
+                {{ profile_update_form.reason(class="form-control", rows="3", placeholder="Explain why this update is needed") }}
+              </div>
+              <div class="col-12">
+                {% for field_name, errors in profile_update_form.errors.items() %}
+                  {% for error in errors %}
+                  <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                {% endfor %}
+              </div>
+              <div class="col-12 d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" type="submit" {% if pending_profile_request %}disabled{% endif %}>Submit for verification</button>
+                {% if pending_profile_request %}
+                <span class="text-muted small align-self-center">You already have a pending request waiting for HR review.</span>
+                {% endif %}
+              </div>
+            </form>
+          </div>
+          <div class="col-12 col-xl-5">
+            <div class="border rounded-3 p-3 h-100">
+              <h6 class="mb-3">Protected fields</h6>
+              <p class="text-muted small mb-3">These records stay read-only for employees and must be changed directly by HR or administrators.</p>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="badge bg-light-secondary text-secondary">Name</span>
+                <span class="badge bg-light-secondary text-secondary">Username</span>
+                <span class="badge bg-light-secondary text-secondary">Email</span>
+                <span class="badge bg-light-secondary text-secondary">Phone numbers</span>
+                <span class="badge bg-light-secondary text-secondary">Government IDs</span>
+                <span class="badge bg-light-secondary text-secondary">Employee code</span>
+                <span class="badge bg-light-secondary text-secondary">Department</span>
+                <span class="badge bg-light-secondary text-secondary">Position</span>
+                <span class="badge bg-light-secondary text-secondary">Employment details</span>
+              </div>
+              <h6 class="mb-2">Recent profile update requests</h6>
+              <div class="d-flex flex-column gap-2">
+                {% for item in profile_update_requests %}
+                <div class="rounded-3 border p-3">
+                  <div class="d-flex justify-content-between align-items-start gap-2">
+                    <span class="fw-semibold">{{ item.status|title }}</span>
+                    <small class="text-muted">{{ item.created_at.strftime('%Y-%m-%d %H:%M') if item.created_at else '' }}</small>
+                  </div>
+                  <div class="text-muted small mt-2">{{ item.reason or "No note provided." }}</div>
+                  {% if item.decision_notes %}
+                  <div class="small mt-2">Reviewer note: {{ item.decision_notes }}</div>
+                  {% endif %}
+                </div>
+                {% else %}
+                <div class="text-muted small">No profile update requests yet.</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Employment Details</h4>
+      </div>
+      <div class="card-body">
+        <dl class="row info-pair mb-0">
+          <dt class="col-sm-4">Employee Code</dt><dd class="col-sm-8">{{ current_user.employee.employee_code }}</dd>
+          <dt class="col-sm-4">Department</dt><dd class="col-sm-8">{{ current_user.employee.department.name if current_user.employee.department else "Unassigned" }}</dd>
+          <dt class="col-sm-4">Position</dt><dd class="col-sm-8">{{ current_user.employee.position.name if current_user.employee.position else "Unassigned" }}</dd>
+          <dt class="col-sm-4">Employment Status</dt><dd class="col-sm-8">{{ current_user.employee.status_label }}</dd>
+          <dt class="col-sm-4">Date Hired</dt><dd class="col-sm-8">{{ current_user.employee.date_hired or "Not set" }}</dd>
+          <dt class="col-sm-4">Schedule</dt><dd class="col-sm-8">{{ active_shift.shift.shift_name ~ " (" ~ active_shift.shift.start_time.strftime('%I:%M %p') ~ " to " ~ active_shift.shift.end_time.strftime('%I:%M %p') ~ ")" if active_shift else "Default office shift (8:30 AM to 5:30 PM)" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="card surface-card h-100">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Personal Details</h4>
+      </div>
+      <div class="card-body">
+        <dl class="row info-pair mb-0">
+          <dt class="col-sm-4">Birthdate</dt><dd class="col-sm-8">{{ current_user.employee.birthdate or "Not set" }}</dd>
+          <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">{{ current_user.employee.contact_number or "Not set" }}</dd>
+          <dt class="col-sm-4">Company Email</dt><dd class="col-sm-8">{{ current_user.employee.company_email or "Not set" }}</dd>
+          <dt class="col-sm-4">Personal Email</dt><dd class="col-sm-8">{{ current_user.employee.personal_email or "Not set" }}</dd>
+          <dt class="col-sm-4">Address</dt><dd class="col-sm-8">{{ current_user.employee.address or "Not set" }}</dd>
+          <dt class="col-sm-4">Emergency Contact</dt><dd class="col-sm-8">{{ current_user.employee.emergency_contact_name or "Not set" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

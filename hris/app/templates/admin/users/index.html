@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block page_heading %}User Accounts{% endblock %}
+{% block page_subtitle %}Create and manage HRIS access for employees and administrators.{% endblock %}
+{% block page_actions %}
+<a class="btn btn-primary" data-modal-link="true" href="{{ url_for('admin.create_user') }}"><i class="bi bi-plus-lg me-2"></i>Create User</a>
+<a class="btn btn-light-primary" href="{{ url_for('admin.import_users') }}"><i class="bi bi-file-earmark-excel me-2"></i>Import Users</a>
+<a class="btn btn-light-primary" href="{{ url_for('admin.access_governance') }}"><i class="bi bi-shield-lock me-2"></i>Access Governance</a>
+{% endblock %}
+{% block content %}
+<div class="card surface-card table-shell">
+  <div class="card-header">
+    <h4 class="card-title mb-0">Access Management</h4>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle datatable">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Linked Employee</th>
+            <th>API Access</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td class="fw-semibold">{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.role.name if user.role else "Unassigned" }}</td>
+            <td>{{ user.employee.full_name if user.employee else "Not linked" }}</td>
+            <td>
+              <span class="badge {{ 'bg-light-info text-info' if user.can_access_api else 'bg-light-secondary text-secondary' }}">
+                {{ 'Enabled' if user.can_access_api else 'Disabled' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge {{ 'bg-light-success text-success' if user.is_active else 'bg-light-secondary text-secondary' }}">
+                {{ 'Active' if user.is_active else 'Inactive' }}
+              </span>
+            </td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-light-primary" data-modal-link="true" href="{{ url_for('admin.edit_user', user_id=user.id) }}">Edit</a>
+              <a class="btn btn-sm btn-light-info" data-modal-link="true" href="{{ url_for('admin.manage_user_menus', user_id=user.id) }}">Menus</a>
+              <a class="btn btn-sm btn-light-warning" data-modal-link="true" href="{{ url_for('admin.reset_password', user_id=user.id) }}">Reset</a>
+              <form class="d-inline" method="post" action="{{ url_for('admin.toggle_user', user_id=user.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-light-secondary" type="submit">{{ 'Deactivate' if user.is_active else 'Activate' }}</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">No user accounts created yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

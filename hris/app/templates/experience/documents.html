@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}My Documents{% endblock %}
+{% block page_heading %}My Documents{% endblock %}
+{% block page_subtitle %}Your document locker for files, acknowledgements, requests, and payroll slips.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header"><h4 class="card-title">Document locker</h4></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead><tr><th>Document</th><th>Status</th><th>Expiry</th><th>Actions</th></tr></thead>
+            <tbody>
+              {% for item in docs.documents %}
+              <tr>
+                <td><strong>{{ item.display_name }}</strong><div class="text-muted">{{ item.record.document_type.replace('_', ' ')|title }}</div></td>
+                <td>{{ item.status_label }}</td>
+                <td>{{ item.record.expiry_date or "N/A" }}</td>
+                <td>
+                  <div class="d-flex gap-2 flex-wrap">
+                    {% if item.downloadable %}<a class="btn btn-sm btn-light-primary" href="{{ url_for('experience.download_document', document_id=item.record.id) }}">Download</a>{% endif %}
+                    {% if not item.acknowledged %}
+                    <form method="post" class="d-inline"><input type="hidden" name="document_id" value="{{ item.record.id }}"><button class="btn btn-sm btn-light-secondary" type="submit">Acknowledge</button></form>
+                    {% else %}
+                    <span class="badge bg-light-success">Acknowledged</span>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-muted">No personal documents have been uploaded yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card mb-4">
+      <div class="card-header"><h4 class="card-title">Payslips</h4></div>
+      <div class="card-body">
+        {% for item in docs.payslips %}
+        <div class="experience-list-row">
+          <div><strong>{{ item.cutoff.cutoff_name if item.cutoff else "Payslip" }}</strong><div class="text-muted">{{ item.status|title }}</div></div>
+          <a class="btn btn-sm btn-light-primary" href="{{ url_for('payroll.download_entry_pdf', entry_id=item.id) }}">PDF</a>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No payslips are available yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h4 class="card-title">Document requests</h4></div>
+      <div class="card-body">
+        {% for item in docs.document_requests %}
+        <div class="experience-list-row">
+          <div><strong>{{ item.subject }}</strong><div class="text-muted">{{ item.created_at.strftime("%b %d, %Y") if item.created_at else "" }}</div></div>
+          <span class="badge bg-light-secondary">{{ item.status.replace('_', ' ')|title }}</span>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No document requests yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

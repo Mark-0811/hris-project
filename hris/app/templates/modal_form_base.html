@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block body_class %}modal-route{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_heading %}{% endblock %}
+{% block page_subtitle %}{% endblock %}
+{% block page_actions %}{% endblock %}
+{% block content %}
+<div class="modal-page-backdrop">
+  <div class="modal fade hris-modal-fade show d-block" tabindex="-1" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable {{ modal_size|default('modal-lg') }}">
+      <div class="modal-content modal-form-content" data-modal-size="{{ modal_size|default('modal-lg') }}">
+        <div class="modal-header">
+          <div>
+            <h4 class="modal-title mb-1">{{ page_title }}</h4>
+            {% if modal_intro %}
+            <p class="text-muted mb-0">{{ modal_intro }}</p>
+            {% endif %}
+          </div>
+          <a class="btn-close" href="{{ cancel_url }}" aria-label="Close" data-modal-close="true"></a>
+        </div>
+        <div class="modal-body">
+          {% block modal_body %}{% endblock %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.querySelector(".hris-modal-fade");
+    if (modal) {
+      requestAnimationFrame(() => modal.classList.add("hris-modal-visible"));
+    }
+
+    const backdrop = document.querySelector(".modal-page-backdrop");
+    if (backdrop) {
+      backdrop.addEventListener("click", (event) => {
+        if (event.target === backdrop) {
+          window.location.href = "{{ cancel_url }}";
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}
